@@ -1,0 +1,94 @@
+{
+  "$schema": "https://modelcontextprotocol.io/schema/mcp_config.json",
+  "version": "1.0.0",
+  "project": {
+    "name": "Sub Tracker",
+    "type": "flutter-application",
+    "architecture": "clean-architecture",
+    "primaryLanguage": "dart",
+    "offlineFirst": true
+  },
+  "mcpServers": {
+    "dart-analysis": {
+      "command": "dart",
+      "args": ["mcp-server", "--force-roots-fallback"],
+      "env": {
+        "DART_MCP_ROOT": "${workspaceFolder}"
+      },
+      "description": "Official Dart/Flutter MCP server: static analysis, diagnostics, pub operations, test execution and hot reload.",
+      "autoStart": true,
+      "trust": "workspace"
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "${workspaceFolder}/lib",
+        "${workspaceFolder}/test",
+        "${workspaceFolder}/docs",
+        "${workspaceFolder}/.agents"
+      ],
+      "description": "Scoped read/write access limited to source, tests, docs and agent directories.",
+      "autoStart": true,
+      "trust": "workspace"
+    },
+    "git": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-git", "--repository", "${workspaceFolder}"],
+      "description": "Branch, status, diff and commit inspection for the mandatory PR workflow.",
+      "autoStart": false,
+      "trust": "workspace"
+    }
+  },
+  "analysis": {
+    "analysisOptionsFile": "analysis_options.yaml",
+    "runOn": ["preCommit", "prePullRequest", "onAgentTaskCompletion"],
+    "fatalInfos": true,
+    "fatalWarnings": true,
+    "failOnFormatDiff": true
+  },
+  "commands": {
+    "format": "dart format --set-exit-if-changed .",
+    "analyze": "flutter analyze --fatal-infos",
+    "test": "flutter test",
+    "coverage": "flutter test --coverage && dart run coverage:format_coverage --lcov --in=coverage --out=coverage/lcov.info --report-on=lib",
+    "domainPurityCheck": "grep -rnE \"import .*(flutter|drift|sqflite|dart:io|dart:ui)\" lib/features/*/domain lib/core/domain || true"
+  },
+  "qualityGates": {
+    "analyzerIssues": 0,
+    "failingTests": 0,
+    "domainCoverageMin": 85,
+    "dataCoverageMin": 70,
+    "maxFileLines": 400,
+    "maxFunctionLines": 50,
+    "maxCyclomaticComplexity": 10
+  },
+  "agent": {
+    "rulesFile": ".agents/rules/codeguaid.md",
+    "skillsRoutingFile": ".agents/rules/skills-routing.md",
+    "skillsDirectory": ".agents/skills",
+    "contextFiles": [
+      "GEMINI.md",
+      "docs/SRS.md",
+      "docs/USER_STORIES.md",
+      "docs/KANBAN_AND_GIT_WORKFLOW.md"
+    ],
+    "alwaysOnSkills": [
+      "clean-architecture",
+      "dart-run-static-analysis",
+      "dart-add-unit-test"
+    ],
+    "requireSkillDeclaration": true,
+    "requireRequirementTrace": true,
+    "requireTestContractBeforeImplementation": true,
+    "blockedOperations": [
+      "network-calls",
+      "cloud-sync",
+      "payment-integration",
+      "direct-push-to-main",
+      "flutter-or-drift-imports-in-domain"
+    ],
+    "transparencyLog": "AI_Log.md"
+  }
+}
