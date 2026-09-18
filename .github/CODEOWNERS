@@ -1,29 +1,29 @@
 # ==============================================================================
 # Sub Tracker — CODEOWNERS
 # ==============================================================================
-# تم توزيع المسؤوليات وفق التوجيه الهندسي المعتمد للفريق:
+# توزيع المسؤوليات المعتمد لفريق Sub Tracker:
 # - قحطان الشاجع (@QahtanAlshagea): المعمارية والحوكمة وملفات الوكيل
-# - محمد العيدروس: الدومين والعقود
-# - أواب النزيلي: الواجهات وتجربة المستخدم (UI/UX)
-# - محمد العواضي: التخزين المحلي والبيانات (Persistence)
-# - مشعل حاجب: ضمان الجودة والاختبارات (QA)
+# - محمد العيدروس (@Eng-Mohammed-Al-aidrous): الدومين والعقود
+# - أواب النزيلي (@AWNO-1): الواجهات وتجربة المستخدم (UI/UX)
+# - محمد العواضي (@dragongold2022-design): التخزين المحلي وقواعد البيانات (Persistence)
+# - مشعل حاجب (@mshalhajep): ضمان الجودة ومنظومة الاختبارات (QA)
 # ==============================================================================
 
 # المراجعة الافتراضية لكل شيء
 *                                   @QahtanAlshagea
 
 # الدومين والعقود — مسؤولية محمد العيدروس
-/lib/features/*/domain/             @QahtanAlshagea
+/lib/features/*/domain/             @Eng-Mohammed-Al-aidrous @QahtanAlshagea
 
-# التخزين المحلي والبيانات — مسؤولية محمد العواضي
-/lib/features/*/data/               @QahtanAlshagea
+# التخزين المحلي وقواعد البيانات — مسؤولية محمد العواضي
+/lib/features/*/data/               @dragongold2022-design @QahtanAlshagea
 
 # الواجهات وتجربة المستخدم — مسؤولية أواب النزيلي
-/lib/features/*/presentation/       @QahtanAlshagea
-/lib/features/*/ui/                 @QahtanAlshagea
+/lib/features/*/presentation/       @AWNO-1 @QahtanAlshagea
+/lib/features/*/ui/                 @AWNO-1 @QahtanAlshagea
 
 # منظومة الاختبارات وضمان الجودة — مسؤولية مشعل حاجب
-/test/                              @QahtanAlshagea
+/test/                              @mshalhajep @QahtanAlshagea
 
 # الحوكمة والمعمارية وملفات الوكيل — مسؤولية قحطان الشاجع
 /docs/                              @QahtanAlshagea
