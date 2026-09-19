@@ -3,7 +3,7 @@
 
 **مقرر هندسة البرمجيات — العام الجامعي 2026/2027**
 
-**إصدار الوثيقة:** 1.1 &nbsp;|&nbsp; **تاريخ الإصدار:** سبتمبر 2026 &nbsp;|&nbsp; **حالة الوثيقة:** معتمدة
+**إصدار الوثيقة:** 1.2&nbsp;|&nbsp; **تاريخ الإصدار:** سبتمبر 2026 &nbsp;|&nbsp; **حالة الوثيقة:** معتمدة
 
 **إعداد:** قحطان الشاجع، أواب النزيلي، مشعل حاجب، محمد العيدروس، محمد العواضي
 
@@ -50,6 +50,7 @@
 | 0.1 | سبتمبر 2026 | مسودة الفكرة وحدود النطاق |
 | 1.0 | سبتمبر 2026 | اكتمال المحاور الستة والمتطلبات المرقّمة |
 | 1.1 | سبتمبر 2026 | توسعة قواعد العمل وقيود التصميم ومعايير القياس |
+| 1.2 | سبتمبر 2026 | إضافة مصفوفة التتبع الشاملة RTM واعتماد الترقيم المتبادل الكامل (C-04) |
 
 ---
 
@@ -216,6 +217,36 @@
 ## 6-1 ترتيب الأولويات
 
 تُعدّ المتطلبات `FR-01` و`FR-02` و`FR-04` و`FR-06` و`FR-09` و`FR-18` و`FR-19` أساسية لا يقوم النظام بدونها. وتليها في الأهمية `FR-03` و`FR-08` و`FR-10` و`FR-11` و`FR-12` و`FR-13` و`FR-14` و`FR-20`. وتأتي في المرتبة الثالثة `FR-05` و`FR-07` و`FR-15` و`FR-16` و`FR-17` بوصفها متطلبات مكمّلة تُنفَّذ بعد استقرار الأساس.
+
+## 6-2 مصفوفة التتبع بين المتطلبات وقصص المستخدم (Requirements Traceability Matrix)
+
+تضمن هذه المصفوفة التحقق من المعيار الذهبي: **«لا متطلب وظيفي بلا قصة مستخدم، ولا قصة مستخدم بلا سند من المتطلبات»**، وتوضح الارتباط الصارم بين كل متطلب وقصصه وقواعد العمل الحاكمة والطبقة المعمارية المنفذة له:
+
+| رمز المتطلب | اسم المتطلب الوظيفي | قصص المستخدم المرتبطة | قواعد العمل الحاكمة | الطبقات والوحدات المعمارية المنفذة | معيار التحقق والقبول |
+|---|---|---|---|---|---|
+| **FR-01** | إضافة التزام دوري جديد | US-01, US-02, US-03, US-04 | BR-01, BR-02, BR-03, BR-04, BR-06 | `domain/usecases/add_subscription.dart`<br>`presentation/screens/add_edit_screen.dart`<br>`data/daos/subscriptions_dao.dart` | حفظ ناجح ذرّي وسجل مفرد، رفض القيم غير الصالحة والأسماء الفارغة |
+| **FR-02** | استعراض قائمة الالتزامات | US-05 | BR-10 | `domain/usecases/get_subscriptions.dart`<br>`presentation/screens/home_screen.dart`<br>`presentation/widgets/subscription_card.dart` | ترتيب تصاعدي بحسب قرب الاستحقاق، وعرض الحالات الأربع مع حالة الفراغ المصممة |
+| **FR-03** | عرض تفاصيل التزام مفرد | US-06 | BR-01..BR-06 | `domain/usecases/get_subscription_details.dart`<br>`presentation/screens/details_screen.dart`<br>`data/daos/price_history_dao.dart` | عرض كافة البيانات وسجل الأسعار، والتعامل الدفاعي مع السجل المحذوف من سياق آخر |
+| **FR-04** | تعديل التزام قائم | US-07, US-08 | BR-01..BR-06 | `domain/usecases/update_subscription.dart`<br>`presentation/screens/add_edit_screen.dart`<br>`data/daos/subscriptions_dao.dart` | منع تعديل المعرّف وتاريخ الإنشاء، وتوثيق تغير السعر تلقائياً في `price_history` |
+| **FR-05** | تكرار التزام قائم | US-09 | BR-01..BR-06 | `domain/usecases/duplicate_subscription.dart`<br>`presentation/screens/add_edit_screen.dart` | ملء مسبق للبيانات مع تمييز اسم النسخة وتنشيطها افتراضياً |
+| **FR-06** | المحرك الحسابي للإجماليات | US-15, US-16, US-17, US-18 | BR-07, BR-08, BR-10 | `domain/utils/calculation_engine.dart`<br>`domain/usecases/get_summary_metrics.dart`<br>`presentation/widgets/summary_card.dart` | حساب المؤشرات الستة مفصولة بالعملة، وخطأ تقريب تراكمي < 0.01 لكل 100 سجل |
+| **FR-07** | تقرير التوزيع والاتجاه | US-19, US-20 | BR-07, BR-08, BR-10 | `domain/usecases/get_category_distribution.dart`<br>`presentation/screens/reports_screen.dart` | توزيع نسبي ومقارنة شهرية مع الشهر السابق ومؤشر اتجاه صريح |
+| **FR-08** | الأرشفة والاستعادة | US-10, US-11 | BR-10 | `domain/usecases/archive_subscription.dart`<br>`domain/usecases/restore_subscription.dart`<br>`presentation/screens/archive_screen.dart` | استبعاد المؤرشف من الحسابات والتنبيهات، واحتساب الاستحقاق القادم تلقائياً عند الاستعادة |
+| **FR-09** | الحذف الآمن على مرحلتين | US-12, US-13, US-14 | BR-09, BR-10 | `domain/usecases/soft_delete_subscription.dart`<br>`domain/usecases/hard_delete_subscription.dart`<br>`presentation/screens/trash_screen.dart` | سلة محذوفات لـ 30 يوماً مع مهلة تراجع 5 ثوانٍ، ومحو نهائي ذرّي مزدوج التأكيد |
+| **FR-10** | التنبيهات المحلية | US-26, US-27, US-28 | BR-10 | `domain/usecases/schedule_notification.dart`<br>`data/datasources/notification_data_source.dart` | جدولة التنبيه بمهلة وساعة محددتين، دعم التأجيل 24 ساعة، وإعادة البناء عند الإقلاع |
+| **FR-11** | تعليم الاستحقاق كمسدَّد | US-28 | BR-10 | `domain/usecases/mark_as_paid.dart`<br>`presentation/widgets/subscription_card.dart` | تقدم تاريخ الاستحقاق لدورة تالية، إزالة وسم التأخر، وحساب الدورات الفائتة |
+| **FR-12** | إدارة الفئات المخصصة | US-21, US-22 | BR-05 | `domain/usecases/manage_categories.dart`<br>`data/daos/categories_dao.dart`<br>`presentation/screens/categories_screen.dart` | اسم فريد بعد التطبيع، ولون مميز، وحذف آمن ينقل السجلات للفئة البديلة ذرّياً |
+| **FR-13** | البحث النصي | US-23 | BR-01 | `domain/usecases/search_subscriptions.dart`<br>`presentation/widgets/search_bar_widget.dart` | مطابقة مطبّعة متجاهلة للهمزات والتشكيل، وتأخير 300ms (Debounce) |
+| **FR-14** | الفرز | US-24 | BR-07 | `domain/usecases/sort_subscriptions.dart`<br>`presentation/widgets/sort_filter_sheet.dart` | فرز متعدد العوامل (استحقاق، قيمة، أبجدي، تاريخ إنشاء) بمعيار ثانوي مانع للاهتزاز |
+| **FR-15** | التصفية متعددة العوامل | US-25 | BR-05, BR-10 | `domain/usecases/filter_subscriptions.dart`<br>`presentation/widgets/filter_sheet.dart` | تصفية مقترنة بالفئة والحالة والدورية والمدى السعري مع عدّاد للمرشحات النشطة |
+| **FR-16** | العمليات الجماعية | US-35 | BR-09, BR-10 | `domain/usecases/batch_subscription_operation.dart`<br>`data/daos/subscriptions_dao.dart` | أرشفة أو حذف أو تصنيف متعدد داخل معاملة ذرّية واحدة تنجح كلها أو تُلغى كلها |
+| **FR-17** | النسخ الاحتياطي والاستعادة | US-29, US-30 | BR-01..BR-10 | `domain/usecases/export_backup.dart`<br>`domain/usecases/import_backup.dart`<br>`data/models/backup_model.dart` | ملف JSON محلي، تحقق بنيوي، ترقية تلقائية للمخطط الأقدم، وخيار دمج أو استبدال |
+| **FR-18** | معالجة التقويم والزمن | US-32, US-33, US-34 | BR-04 | `domain/utils/recurrence_calculator.dart`<br>`domain/utils/date_utils.dart` | ترسيخ الحساب باليوم الأصلي، معالجة 31 و 29 فبراير، وحساب مباشر للتواريخ الماضية |
+| **FR-19** | منع التكرار غير المقصود | US-36, US-37 | BR-01, BR-04 | `domain/usecases/check_duplicate_subscription.dart`<br>`presentation/state/button_lock_controller.dart` | تحذير تكرار غير حاجب، وقفل الأزرار التنفيذية لمنع النقر المزدوج (Double-tap lock) |
+| **FR-20** | الإعدادات العامة ومسح البيانات | US-38, US-39 | BR-08, BR-10 | `domain/usecases/manage_settings.dart`<br>`domain/usecases/wipe_database.dart`<br>`presentation/screens/settings_screen.dart` | ضبط السمة والعملة والتنبيهات، ومسح شامل مشروط بتأكيد كتابي صريح |
+| **NFR-03** | الاعتمادية والتعافي المحلي | US-31, US-37 | — | `core/database/database_recovery_manager.dart`<br>`core/error/failures.dart` | عمل كامل دون شبكة، التقاط تلف الملف، ومعاملات ذرّية تحمي من انقطاع التنفيذ |
+| **NFR-04** | الوصولية وسهولة الاستخدام | US-40 | — | `core/theme/app_theme.dart`<br>`presentation/tokens/` | تباين ≥ 4.5:1، مساحات لمس ≥ 48×48، تكبير الخط إلى 200%، والحالات الأربع |
+| **NFR-08** | التدويل ودعم العربية أولاً | US-40 | — | `core/localization/app_localizations.dart` | دعم RTL كامل، عدم وجود نصوص مكتوبة داخل الكود، وتنسيق أرقام وتواريخ مرن |
 
 ---
 
