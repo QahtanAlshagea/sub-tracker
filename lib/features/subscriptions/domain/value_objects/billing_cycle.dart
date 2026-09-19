@@ -60,6 +60,14 @@ class BillingCycle {
   bool get isWeekly => type == CycleType.weekly;
   bool get isCustom => type == CycleType.custom;
 
+  /// Approximate duration in days for recurrence and reminder estimates.
+  int get approximateDays => switch (type) {
+    CycleType.monthly => 30,
+    CycleType.yearly => 365,
+    CycleType.weekly => 7,
+    CycleType.custom => customDays ?? 30,
+  };
+
   /// Serialized name identifier suitable for database storage and JSON models.
   String get name => type.name;
 
