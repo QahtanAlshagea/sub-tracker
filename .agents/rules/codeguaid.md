@@ -80,6 +80,17 @@ Before closing the task, verify each line and answer YES/NO in the reply:
 
 Any NO → the task is not done. Fix it or report it as blocked.
 
+### 1.1 THE GOLDEN HYBRID EXECUTION PROTOCOL (PROMPT 3 DIRECTIVE)
+To guarantee 100% precision, zero hallucinations, and prevent database schema thrashing:
+1. **Macro Structure:** Execution follows the 18 Kanban Cards (`C-01` to `C-18`) sequentially per `docs/KANBAN_AND_GIT_WORKFLOW.md`. This maintains Clean Architecture layering, prevents constant Drift table rebuilds, and mirrors the 5 team members' academic responsibilities.
+2. **Micro Discipline (Story-Level):** Within each card, the agent executes with strict user story discipline:
+   - **Ground:** Traces to exact `FR-XX`, `US-XX`, and `[EC-XX-Y]` edge cases from `docs/USER_STORIES.md`.
+   - **Test Contract First:** Pure test contracts naming every edge case before implementation.
+   - **Targeted Skills Only:** Stricly use `dart-*`, `flutter-*`, `clean-architecture`. NEVER invoke marketing, logo generation, banner design, or slides skills unless explicitly asked.
+   - **Isolated Branches:** Work in dedicated feature/docs branches (`feature/c-XX-...`). Never push directly to `main` or `develop`.
+   - **Human Review Gate:** Conclude with the formal Story/Card Report, and STOP execution until explicit user approval ("انتقل" or review feedback) is received.
+
+
 ---
 
 ## 2. ARCHITECTURE RULES (SOLID & HARD BOUNDARIES)
@@ -192,16 +203,51 @@ The agent never claims authorship of engineering decisions; it proposes, the hum
 
 ## 8. RESPONSE FORMAT CONTRACT
 
-Every agent reply that touches this project must contain, in order:
+Every agent reply that implements or verifies code/specs in this project must contain, in order:
 
-```
+```markdown
 SKILLS APPLIED: <list or "none — rationale">
-REQUIREMENT TRACE: FR-xx / US-xx / EC-xx
-PLAN: <numbered steps, file paths>
-TEST CONTRACT: <named tests>
+REQUIREMENT TRACE: Card C-XX / FR-XX / US-XX / [EC-XX-Y]
+PLAN: <numbered steps, target layer, file paths>
+TEST CONTRACT: <named tests mirroring lib/ in test/>
 CHANGES: <files created or modified>
 VERIFICATION: <format / analyze / test output>
 SELF-AUDIT: <7 YES/NO answers from §1 Step 7>
+
+---
+
+### تقرير الإنجاز: [رمز البطاقة أو القصة] — [العنوان]
+
+**المتطلب المسنَد إليه:** FR-XX / NFR-XX / US-XX
+
+**ما نُفِّذ:**
+- [شرح مختصر للمنطق المبني، بلغة واضحة هندسية ومباشرة]
+
+**الملفات المتأثرة:**
+- أُنشئ: [قائمة المسارات]
+- عُدِّل: [قائمة المسارات]
+
+**الاختبارات:**
+- عدد الاختبارات المضافة: [رقم]
+- حالات الحافة المغطاة: [قائمة بمعرفاتها المسماة EC-XX-Y]
+- نتيجة التشغيل: [ناجحة بالكامل / تفاصيل أي معالجة]
+
+**كيف تجرّبها بنفسك يدوياً:**
+- [خطوات تحقق واضحة وقابلة للتنفيذ]
+
+**الفرع والالتزام:**
+- اسم الفرع: [feature/... أو docs/...]
+- رسالة الالتزام: [Conventional Commit]
+
+**بطاقة كانبان والتريلو:**
+- [حالة البطاقة على Trello والمطلوب نقلها إليه]
+
+**افتراضات أو قرارات معمارية اتُّخذت:**
+- [أي قرار أو افتراض تقني اتسق مع النظام لمراجعته]
+
+---
+**بانتظار أمرك: "انتقل" أو أي ملاحظات للمراجعة.**
 ```
 
 A reply missing any section is non-compliant and must be regenerated before the work is accepted.
+
