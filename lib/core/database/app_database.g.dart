@@ -2922,6 +2922,14 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     'idx_price_history_sub',
     'CREATE INDEX idx_price_history_sub ON price_history (subscription_id, changed_at)',
   );
+  late final CategoryDao categoryDao = CategoryDao(this as AppDatabase);
+  late final SubscriptionDao subscriptionDao = SubscriptionDao(
+    this as AppDatabase,
+  );
+  late final PriceHistoryDao priceHistoryDao = PriceHistoryDao(
+    this as AppDatabase,
+  );
+  late final SettingsDao settingsDao = SettingsDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
