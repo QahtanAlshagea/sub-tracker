@@ -259,3 +259,39 @@ enum StateTransitionReason {
   alreadyInTrash,
   cannotRenewInactive,
 }
+
+/// Entity lookup failure when subscription ID is not found.
+class SubscriptionNotFoundFailure extends SubscriptionDomainFailure {
+  final String id;
+  const SubscriptionNotFoundFailure(this.id)
+    : super('Subscription with id "$id" was not found.');
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SubscriptionNotFoundFailure &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          message == other.message;
+
+  @override
+  int get hashCode => runtimeType.hashCode ^ id.hashCode ^ message.hashCode;
+}
+
+/// Entity lookup failure when category ID is not found.
+class CategoryNotFoundFailure extends SubscriptionDomainFailure {
+  final String id;
+  const CategoryNotFoundFailure(this.id)
+    : super('Category with id "$id" was not found.');
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is CategoryNotFoundFailure &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          message == other.message;
+
+  @override
+  int get hashCode => runtimeType.hashCode ^ id.hashCode ^ message.hashCode;
+}
