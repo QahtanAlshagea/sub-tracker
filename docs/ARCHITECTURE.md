@@ -47,29 +47,336 @@
 
 ---
 
-# 3. نموذج البيانات
+# 3. نموذج البيانات وحوكمة التخزين المحلي (SQLite & Drift)
 
-## 3-1 جدول الالتزامات
+يعتمد تطبيق **Sub Tracker** على نموذج تخزين محلي كامل (Offline-First Local Persistence) باستخدام محرك **SQLite** عبر مكتبة **Drift** في بيئة Flutter/Dart، مع الالتزام التام بعزل الطبقات وفق المعمارية النظيفة (Clean Architecture)؛ بحيث تُعرَّف الجداول والفهارس والـ DAOs ومصادر البيانات داخل طبقة البيانات (`data/`) ومجلد النواة المشتركة للمحرك (`core/database/`) دون أي تسريب لتفاصيل التخزين أو مكتبات Drift إلى طبقة الدومين (`domain/`).
 
-يحمل كل التزام معرّفاً فريداً، واسماً، وقيمة مخزَّنة بوحدات صغرى صحيحة لا بعدد عشري عائم تفادياً لخطأ التمثيل، ورمز عملة، ونوع دورية، وعدد أيام للدورية المخصصة، وتاريخ بدء، وتاريخ استحقاق قادم، واليوم الأصلي من الشهر الذي يُرسَّخ عليه الحساب، ومعرّف فئة، وحالة تمثل النشط والمؤرشف والمحذوف، وعلامة للتجربة المجانية، وملاحظات ورابطاً ووصفاً لوسيلة الدفع، وإعدادات التنبيه من تفعيل ومهلة وساعة، وطوابع الإنشاء والتعديل والحذف.
+---
 
-**قرار مهم:** تُخزَّن المبالغ أعداداً صحيحة بالوحدة الصغرى للعملة، لأن الأعداد العائمة تُنتج أخطاء تراكمية في الجمع لا تظهر إلا بعد مئات السجلات، وهي أخطاء غير مقبولة في نظام مالي.
+## 3-1 سياسة العملات وتخزين المبالغ المالية بالوحدات الصغرى (Minor Units Policy)
 
-## 3-2 جدول الفئات
+### 3-1-1 العلة الهندسية
+تستخدم لغات البرمجة الحديثة (بما فيها Dart) معيار **IEEE 754** لتمثيل الأعداد العشرية العائمة (`double`). هذا التمثيل يعاني بطبيعته من أخطاء عدم الدقة الحسابية (Floating-Point Rounding Errors) مثل `0.1 + 0.2 = 0.30000000000000004`. وفي الأنظمة المالية وإدارة الاشتراكات، يؤدي تراكم هذه الكسور على مدى مئات العمليات والتحويلات إلى فروقات حسابية مشوهة للتقارير وملخصات الإنفاق.
 
-يحمل معرّفاً واسماً فريداً بعد التطبيع ولوناً وعلامة تميّز الفئة النظامية «غير مصنّف» التي لا تُحذف، وطابع إنشاء.
+### 3-1-2 القاعدة الإلزامية في قاعدة البيانات
+- **تُمنع الحقول العائمة منعاً باتاً:** يُحظر استخدام أعمدة `REAL` أو `FLOAT` في أي جدول مالي.
+- **التخزين بوحدات صغرى صحيحة:** تُخزَّن جميع المبالغ في صورة أعداد صحيحة 64-بت (`INTEGER` في SQLite يقابلها `int` في Dart)، تمثل **الوحدة الصغرى للعملة** (Minor Currency Unit):
+  - **العملات ثنائية المنازل (2 Decimals):** مثل الدولار الأمريكي (USD)، الريال السعودي (SAR)، الريال اليمني (YER)، واليورو (EUR).
+    $$\text{Amount Minor Units} = \text{Amount Major Units} \times 100$$
+    *مثال:* اشتراك بقيمة $\$9.99$ يُخزَّن في العمود كعدد صحيح `999`. ومبلغ $150.00$ ر.س يُخزَّن `15000`.
+  - **العملات معدومة المنازل (0 Decimals):** مثل الين الياباني (JPY) والوون الكوري (KRW).
+    $$\text{Amount Minor Units} = \text{Amount Major Units} \times 1$$
+    *مثال:* $¥1000$ تُخزَّن `1000`.
+  - **العملات ثلاثية المنازل (3 Decimals):** مثل الدينار الكويتي (KWD) والدينار البحريني (BHD).
+    $$\text{Amount Minor Units} = \text{Amount Major Units} \times 1000$$
+    *مثال:* $1.250$ د.ك يُخزَّن `1250`.
 
-## 3-3 جدول تاريخ الأسعار
+### 3-1-3 رموز العملات والتحويل إلى كائنات الدومين
+- يُخزَّن رمز العملة في عمود `currency_code` كنص ثلاثي الأحرف مطابق لمعيار **ISO 4217** (مثل `"USD"`, `"YER"`, `"SAR"`, `"EUR"`).
+- في طبقة الدومين، يُحوَّل الزوج (`price_minor_units`, `currency_code`) إلى كائن القيمة النقي `Money`، الذي يحوي العمليات الحسابية ويمنع الجمع بين عملتين مختلفتين، بينما تتولى طبقة العرض (`presentation/formatters`) تحويل القيمة الصغرى إلى النص التنسيقي المناسب لواجهة المستخدم بحسب لغة الجهاز وتنسيقات الأرقام المحلية.
 
-يحمل معرّفاً، ومعرّف الالتزام المرتبط، والقيمة السابقة والجديدة، وتاريخ التغيير. ويُحذف تبعاً لحذف الالتزام حذفاً نهائياً لا قبله.
+---
 
-## 3-4 الفهارس
+## 3-2 مواصفات الجداول وقاموس البيانات (Data Dictionary)
 
-يُفهرَس تاريخ الاستحقاق لأنه معيار الفرز الافتراضي، ومعرّف الفئة لأنه معيار التصفية الأكثر استعمالاً، والحالة لأنها تُقصي المؤرشف والمحذوف من كل استعلام تقريباً. ويُفهرَس تركيب الاسم المطبَّع مع تاريخ الاستحقاق لخدمة فحص التكرار.
+يتكون المخطط المعتمد للتطبيق من أربعة جداول رئيسية موزعة وفق مبدأ المسؤولية الواحدة (SRP):
 
-## 3-5 سياسة ترقية المخطط
+### 3-2-1 جدول الفئات (`categories`)
+يُدير تصنيفات الاشتراكات والخدمات (مثل: ترفيه، عمل، تعليم، خدمات سحابية)، ويحتوي التصنيف النظامي الأساسي غير القابل للحذف.
 
-يرتفع رقم إصدار المخطط بمقدار واحد مع كل تغيير منشور، ولا تُعدَّل ترقية سبق نشرها مهما بدت خاطئة، بل تُصحَّح بترقية تالية. وكل ترقية لها اختبار يبدأ من المخطط السابق ويؤكد عدم فقدان البيانات. وتغيير عمود بطريقة مدمِّرة يتم بنسخ الجدول وإحلاله لا بحذف العمود مباشرة.
+| اسم الحقل | نوع SQLite | نوع Dart / Drift | القيود (Constraints) | الوصف الهندسي والوظيفي |
+|---|---|---|---|---|
+| `id` | `TEXT` | `String` | `PRIMARY KEY` | معرّف فريد بصيغة UUID v4 مُولَّد من التطبيق |
+| `name` | `TEXT` | `String` | `NOT NULL UNIQUE` | اسم الفئة الفريد بعد التطبيع وتجريد الفراغات (1-24 حرفاً) |
+| `color_value` | `INTEGER` | `int` | `NOT NULL` | القيمة العددية للون بصيغة ARGB 32-bit (مثال: `0xFF4F46E5`) |
+| `icon_code` | `TEXT` | `String?` | `NULL` | معرّف الأيقونة أو اسم الرمز المعتمد في نظام التصميم |
+| `is_system` | `INTEGER` | `bool` | `NOT NULL DEFAULT 0` | راية تميز الفئة النظامية «غير مصنّف» المحمية من التعديل والحذف (`1 = true, 0 = false`) |
+| `created_at` | `INTEGER` | `DateTime` | `NOT NULL` | طابع زمني دقيق لإنشاء الفئة (مخزّن بمللي ثانية UTC أو ISO 8601) |
+
+---
+
+### 3-2-2 جدول الاشتراكات (`subscriptions`)
+الجدول المركزي لإدارة كافة الالتزامات والاشتراكات الدورية وحالاتها وإعدادات تجديدها وتنبيهاتها.
+
+| اسم الحقل | نوع SQLite | نوع Dart / Drift | القيود (Constraints) | الوصف الهندسي والوظيفي |
+|---|---|---|---|---|
+| `id` | `TEXT` | `String` | `PRIMARY KEY` | معرّف فريد بصيغة UUID v4 |
+| `name` | `TEXT` | `String` | `NOT NULL` | اسم الاشتراك أو الخدمة المطبَّع (1-60 حرفاً) |
+| `price_minor_units` | `INTEGER` | `int` | `NOT NULL CHECK(price_minor_units >= 0)` | المبلغ بالوحدة الصغرى للعملة (قيمة موجبة أو صفر للتجارب) |
+| `currency_code` | `TEXT` | `String` | `NOT NULL` | رمز العملة وفق ISO 4217 بثلاثة أحرف كبيرة (مثل `"USD"`) |
+| `cycle_type` | `TEXT` | `String` | `NOT NULL` | دورية التجديد كقيمة نصية من تعداد (`monthly`, `yearly`, `weekly`, `custom`) |
+| `custom_cycle_days`| `INTEGER` | `int?` | `NULL CHECK(custom_cycle_days IS NULL OR custom_cycle_days BETWEEN 1 AND 3650)` | عدد أيام الدورية المخصصة (إلزامي إذا كان نوع الدورية `custom`) |
+| `start_date` | `INTEGER` | `DateTime` | `NOT NULL` | تاريخ بداية أول دورة اشتراك بتوقيت UTC |
+| `next_due_date` | `INTEGER` | `DateTime` | `NOT NULL` | تاريخ الاستحقاق القادم المحسوب بتوقيت UTC (مفهرس) |
+| `original_anchor_day`| `INTEGER`| `int` | `NOT NULL CHECK(original_anchor_day BETWEEN 1 AND 31)` | اليوم الأصلي المثبت للدورة لحساب الشهور القصيرة والسنة الكبيسة |
+| `category_id` | `TEXT` | `String` | `NOT NULL REFERENCES categories(id) ON DELETE RESTRICT` | مفتاح أجنبي يربط الاشتراك بفئته مع منع حذف الفئة المرتبطة |
+| `status` | `TEXT` | `String` | `NOT NULL DEFAULT 'active'` | حالة الاشتراك (`active`, `archived`, `in_trash`) (مفهرس) |
+| `is_trial` | `INTEGER` | `bool` | `NOT NULL DEFAULT 0` | راية تفيد ما إذا كان الاشتراك فترة تجريبية مجانية |
+| `notes` | `TEXT` | `String?` | `NULL` | ملاحظات اختيارية يدوية (بحد أقصى 500 حرف) |
+| `renewal_url` | `TEXT` | `String?` | `NULL` | رابط ويب صالح لصفحة إدارة الاشتراك وإلغائه |
+| `payment_method_desc`| `TEXT` | `String?` | `NULL` | وصف وسيلة الدفع (مثل: «بطاقة فيزا 4242»، بحد أقصى 50 حرفاً) |
+| `reminder_enabled` | `INTEGER` | `bool` | `NOT NULL DEFAULT 1` | تفعيل التنبيهات المحلية لهذا الاشتراك |
+| `reminder_lead_days` | `INTEGER`| `int` | `NOT NULL DEFAULT 1 CHECK(reminder_lead_days BETWEEN 0 AND 30)` | مهلة الإشعار قبل الاستحقاق بعدد الأيام |
+| `reminder_time_hour` | `INTEGER`| `int` | `NOT NULL DEFAULT 9 CHECK(reminder_time_hour BETWEEN 0 AND 23)` | ساعة التنبيه (0 إلى 23) |
+| `reminder_time_minute`| `INTEGER`| `int` | `NOT NULL DEFAULT 0 CHECK(reminder_time_minute BETWEEN 0 AND 59)` | دقيقة التنبيه (0 إلى 59) |
+| `created_at` | `INTEGER` | `DateTime` | `NOT NULL` | وقت إنشاء السجل بتوقيت UTC |
+| `updated_at` | `INTEGER` | `DateTime` | `NOT NULL` | وقت آخر تحديث للسجل بتوقيت UTC |
+| `deleted_at` | `INTEGER` | `DateTime?`| `NULL` | وقت النقل إلى سلة المحذوفات بتوقيت UTC |
+| `archived_at` | `INTEGER` | `DateTime?`| `NULL` | وقت الأرشفة بتوقيت UTC |
+
+---
+
+### 3-2-3 جدول سجل تغير الأسعار (`price_history`)
+يُوثق تاريخ تعديلات أسعار الاشتراكات عبر الزمن لتوليد الرسوم البيانية ورصد التضخم المالي.
+
+| اسم الحقل | نوع SQLite | نوع Dart / Drift | القيود (Constraints) | الوصف الهندسي والوظيفي |
+|---|---|---|---|---|
+| `id` | `TEXT` | `String` | `PRIMARY KEY` | معرّف فريد بصيغة UUID v4 |
+| `subscription_id`| `TEXT` | `String` | `NOT NULL REFERENCES subscriptions(id) ON DELETE CASCADE` | مفتاح أجنبي مرتبط بالاشتراك يُحذف تلقائياً مع حذف الاشتراك النهائي |
+| `old_price_minor_units`| `INTEGER`| `int` | `NOT NULL CHECK(old_price_minor_units >= 0)` | المبلغ السابق بالوحدة الصغرى للعملة |
+| `new_price_minor_units`| `INTEGER`| `int` | `NOT NULL CHECK(new_price_minor_units >= 0)` | المبلغ الجديد بالوحدة الصغرى للعملة |
+| `currency_code` | `TEXT` | `String` | `NOT NULL` | رمز العملة وفق ISO 4217 |
+| `changed_at` | `INTEGER` | `DateTime` | `NOT NULL` | الطابع الزمني لتاريخ سريان السعر الجديد (مفهرس مع معرّف الاشتراك) |
+
+---
+
+### 3-2-4 جدول إعدادات وتفضيلات التطبيق (`settings`)
+جدول أحادي السجل (Singleton Table) يخزن تفضيلات المستخدم العامة وحالة البيئة المحلية.
+
+| اسم الحقل | نوع SQLite | نوع Dart / Drift | القيود (Constraints) | الوصف الهندسي والوظيفي |
+|---|---|---|---|---|
+| `id` | `TEXT` | `String` | `PRIMARY KEY` | قيمة مفتاحية ثابتة دائماً: `'app_settings'` لضمان أحادية السجل |
+| `theme_mode` | `TEXT` | `String` | `NOT NULL DEFAULT 'system'` | سمة الواجهة (`system`, `light`, `dark`) |
+| `default_currency`| `TEXT` | `String` | `NOT NULL DEFAULT 'USD'` | العملة الافتراضية للتطبيق وفق ISO 4217 |
+| `default_reminder_days`| `INTEGER`| `int` | `NOT NULL DEFAULT 1 CHECK(default_reminder_days BETWEEN 0 AND 30)` | مهلة التنبيه الافتراضية للاشتراكات الجديدة |
+| `default_reminder_hour`| `INTEGER`| `int` | `NOT NULL DEFAULT 9 CHECK(default_reminder_hour BETWEEN 0 AND 23)` | ساعة التنبيه الافتراضية (0-23) |
+| `default_reminder_minute`| `INTEGER`| `int` | `NOT NULL DEFAULT 0 CHECK(default_reminder_minute BETWEEN 0 AND 59)` | دقيقة التنبيه الافتراضية (0-59) |
+| `default_sort_order` | `TEXT` | `String` | `NOT NULL DEFAULT 'due_date_asc'` | معيار الترتيب الافتراضي لقائمة الاشتراكات |
+| `last_backup_at` | `INTEGER` | `DateTime?`| `NULL` | وقت آخر عملية تصدير نسخة احتياطية ناجحة |
+| `schema_version` | `INTEGER` | `int` | `NOT NULL DEFAULT 2` | رقم إصدار المخطط المسجل لأغراض التحقق الداخلي |
+| `updated_at` | `INTEGER` | `DateTime` | `NOT NULL` | طابع زمني لآخر تعديل في إعدادات التطبيق |
+
+---
+
+## 3-3 العلاقات والقيود التناغمية (Relationships & Integrity Constraints)
+
+```
+┌─────────────────────────┐                ┌───────────────────────────────┐
+│       categories        │                │         subscriptions         │
+├─────────────────────────┤                ├───────────────────────────────┤
+│ PK  id                  │◄───────┐       │ PK  id                        │
+│     name (UNIQUE)       │        │       │     name                      │
+│     color_value         │        │1      │     price_minor_units         │
+│     icon_code           │        │       │     currency_code             │
+│     is_system           │        │       │     cycle_type                │
+│     created_at          │        │       │     original_anchor_day       │
+└─────────────────────────┘        │       │     next_due_date (INDEXED)   │
+                                   └───────┤ FK  category_id (RESTRICT)    │
+                                          N│     status (INDEXED)          │
+                                           │     reminder_enabled          │
+                                           │     created_at                │
+                                           └───────────────┬───────────────┘
+                                                           │1
+                                                           │
+                                                           │ CASCADE
+                                                           │
+                                                          N▼
+                                           ┌───────────────────────────────┐
+                                           │         price_history         │
+                                           ├───────────────────────────────┤
+                                           │ PK  id                        │
+                                           │ FK  subscription_id (CASCADE) │
+                                           │     old_price_minor_units     │
+                                           │     new_price_minor_units     │
+                                           │     currency_code             │
+                                           │     changed_at (INDEXED)      │
+                                           └───────────────────────────────┘
+```
+
+1. **علاقة التصنيف بالاشتراكات (`categories` 1 ── N `subscriptions`):**
+   - الرابط: `subscriptions.category_id` يُشير إلى `categories.id`.
+   - سياسة الحذف (`ON DELETE RESTRICT`): يُمنع حذف أي فئة ترتبط باشتراكات نشطة أو مؤرشفة أو في سلة المحذوفات. وفي منطق التطبيق، عند رغبة المستخدم في حذف فئة مخصصة، تتولى حالة الاستخدام (`UseCase`) نقل كافة اشتراكاتها تلقائياً وبمعاملة ذرية واحدة (`Transaction`) إلى فئة النظام الافتراضية («غير مصنّف» / `is_system = 1`) قبل تنفيذ حذف الفئة المفرغة.
+2. **علاقة الاشتراك بسجل الأسعار (`subscriptions` 1 ── N `price_history`):**
+   - الرابط: `price_history.subscription_id` يُشير إلى `subscriptions.id`.
+   - سياسة الحذف (`ON DELETE CASCADE`): عند اتخاذ قرار الحذف النهائي والتطهير للاشتراك من سلة المهملات (`Purge`)، يتم تلقائياً حذف سجل تاريخ الأسعار التابع له للحفاظ على سلامة التخزين ومنع السجلات اليتيمة (Orphan Records).
+3. **تفعيل قيود المفاتيح الأجنبية في SQLite:**
+   - بما أن محرك SQLite يُعطل فحص المفاتيح الأجنبية افتراضياً للتوافقية القديمة، يُلزم كود الاتصال في `beforeOpen` بإطلاق الأمر الإلزامي:
+     ```sql
+     PRAGMA foreign_keys = ON;
+     ```
+
+---
+
+## 3-4 الفهارس واستراتيجية تحسين الأداء (Indexes & Performance Optimization)
+
+لتحقيق متطلب الأداء الصارم **NFR-01** (تنفيذ أي استعلام محلي أو فرز خلال زمن استجابة يقل عن 100 مللي ثانية حتى مع آلاف السجلات)، تم تصميم الفهارس التالية بدقة:
+
+| اسم الفهرس | الجدول المستهدف | الأعمدة المفهرسة | التعليل والهدف الهندسي |
+|---|---|---|---|
+| `idx_subscriptions_due_date` | `subscriptions` | `next_due_date ASC` | تسريع استعلام الشاشة الرئيسية لشريط الاستحقاقات القادمة، والفرز الافتراضي، وجدولة التنبيهات |
+| `idx_subscriptions_category_id` | `subscriptions` | `category_id` | تسريع تصفية الاشتراكات حسب التصنيف وحساب مجاميع المصروفات لكل فئة في شاشة التحليلات |
+| `idx_subscriptions_status` | `subscriptions` | `status` | استبعاد الاشتراكات المؤرشفة والمحذوفة من كل استعلام عرض رئيسي (`WHERE status = 'active'`) |
+| `idx_subscriptions_dup_check` | `subscriptions` | `(name, cycle_type, next_due_date)` | تسريع فحص التكرار غير الحاجز (`EC-24`) أثناء كتابة المستخدم للاشتراك الجديد دون قفل الجدول |
+| `idx_price_history_sub` | `price_history` | `(subscription_id, changed_at DESC)` | تسريع جلب وتصيير الرسم البياني لتغيرات أسعار اشتراك محدد مرتبة زمنياً من الأحدث إلى الأقدم |
+| `idx_categories_name` | `categories` | `name UNIQUE` | تسريع التحقق من عدم تكرار أسماء الفئات وضمان فرادتها على مستوى القاعدة |
+
+---
+
+## 3-5 سياسة حوكمة وترقية المخطط دون فقدان بيانات (Schema Migration Strategy & Zero Data Loss)
+
+### 3-5-1 مبادئ الترقية والحوكمة
+1. **أحادية الترقية وعدم الرجوع (Monotonic Versioning):** يرتفع رقم `schemaVersion` بمقدار 1 مع كل تحديث يمس الجداول أو الأعمدة أو الفهارس. يُحظر كلياً تعديل دالة ترقية سابقة تم نشرها في بيئة الإنتاج مهما بدت خاطئة، بل تُصحَّح بترقية تالية صريحة.
+2. **الضمان الصارم لعدم فقدان البيانات (Zero Data Loss Guarantee):** أي تعديل على المخطط يجب أن يُحافظ على 100% من السجلات الموجودة مسبقاً لدى المستخدمين مع الاحتفاظ بالقيم الافتراضية المناسبة للأعمدة الجديدة.
+3. **الترقية داخل معاملة ذرية (Transactional Upgrades):** تُنفَّذ جميع خطوات الترقية داخل معاملة SQLite واحدة؛ بحيث إذا فشلت أي خطوة أو قوطع التطبيق لأي سبب بيئي (مثل نفاد البطارية)، تتراجع القاعدة تلقائياً إلى الحالة السليمة السابقة دون تلف المخطط.
+4. **تهيئة المحرك في `beforeOpen`:**
+   - تفعيل وضع السجل المتقدم للكتابة السريعة ومنع القفل:
+     ```sql
+     PRAGMA journal_mode = WAL;
+     PRAGMA synchronous = NORMAL;
+     PRAGMA foreign_keys = ON;
+     ```
+
+### 3-5-2 أنماط الترقية (Migration Patterns)
+- **النمط التراكمي (Additive Migration):** لإضافة عمود جديد يقبل قيماً فارغة أو له قيمة افتراضية، أو لإنشاء جدول جديد وفهارس جديدة. يُستخدم فيه مباشرة:
+  ```dart
+  await m.addColumn(table, table.newColumn);
+  await m.createTable(newTable);
+  ```
+- **نمط النسخ والإحلال (Copy-and-Swap Pattern):** للتعديلات الهيكلية غير المدعومة مباشرة في SQLite (مثل حذف عمود، أو تعديل نوع عمود، أو تغيير قيود المفاتيح):
+  1. إنشاء جدول مؤقت بالبنية الجديدة: `CREATE TABLE new_subscriptions (...);`
+  2. نسخ البيانات القديمة مع التعيين: `INSERT INTO new_subscriptions SELECT ... FROM subscriptions;`
+  3. إسقاط الجدول القديم: `DROP TABLE subscriptions;`
+  4. إعادة تسمية الجدول المؤقت: `ALTER TABLE new_subscriptions RENAME TO subscriptions;`
+  5. إعادة بناء كافة الفهارس والقيود المرتبطة بالجدول.
+
+---
+
+## 3-6 سيناريو ترقية تجريبي ناجح من الإصدار 1 إلى الإصدار 2 (Migration V1 -> V2 Scenario)
+
+لتأكيد الجاهزية الهندسية وحوكمة الترقية، يُوثق السيناريو التالي لترقية التطبيق من الإصدار المبدئي 1 إلى الإصدار 2 دون أدنى فقدان للبيانات:
+
+### 3-6-1 تعريف الفروق الهيكلية بين الإصدارين
+- **الإصدار 1 (Schema V1):** يحتوي الجداول الأساسية الثلاثة فقط (`categories`, `subscriptions`, `price_history`) بدون حقل وصف وسيلة الدفع في جدول الاشتراكات، وبدون جدول الإعدادات.
+- **الإصدار 2 (Schema V2):**
+  1. إضافة عمود `payment_method_desc TEXT NULL` إلى جدول `subscriptions` لتمكين توثيق بطاقة الدفع (`US-04`).
+  2. إنشاء جدول الإعدادات والتفضيلات الموحد (`settings`) مع غرس السجل الافتراضي الأحادي (`'app_settings'`).
+
+### 3-6-2 كود الترقية المعتمد عبر Drift MigrationStrategy
+```dart
+// lib/core/database/app_database.dart
+@override
+int get schemaVersion => 2;
+
+@override
+MigrationStrategy get migration => MigrationStrategy(
+  onCreate: (Migrator m) async {
+    // إنشاء جميع الجداول والفهارس للإصدار الجديد
+    await m.createAll();
+    // غرس الفئة النظامية «غير مصنّف»
+    await into(categories).insert(
+      CategoriesCompanion.insert(
+        id: 'system_uncategorized_id',
+        name: 'غير مصنّف',
+        colorValue: 0xFF9CA3AF,
+        iconCode: const Value('folder_outline'),
+        isSystem: const Value(true),
+        createdAt: DateTime.now().toUtc(),
+      ),
+    );
+    // غرس السجل الأحادي الافتراضي للإعدادات
+    await into(settings).insert(
+      SettingsCompanion.insert(
+        id: 'app_settings',
+        themeMode: const Value('system'),
+        defaultCurrency: const Value('USD'),
+        defaultReminderDays: const Value(1),
+        defaultReminderHour: const Value(9),
+        defaultReminderMinute: const Value(0),
+        defaultSortOrder: const Value('due_date_asc'),
+        schemaVersion: const Value(2),
+        updatedAt: DateTime.now().toUtc(),
+      ),
+    );
+  },
+  onUpgrade: (Migrator m, int from, int to) async {
+    if (from < 2) {
+      // 1. إضافة العمود الجديد إلى جدول الاشتراكات دون مساس بالبيانات القديمة
+      await m.addColumn(subscriptions, subscriptions.paymentMethodDesc);
+
+      // 2. إنشاء جدول الإعدادات والتفضيلات الجديد
+      await m.createTable(settings);
+
+      // 3. غرس السجل الأحادي للإعدادات بقيمه الافتراضية
+      await into(settings).insert(
+        SettingsCompanion.insert(
+          id: 'app_settings',
+          themeMode: const Value('system'),
+          defaultCurrency: const Value('USD'),
+          defaultReminderDays: const Value(1),
+          defaultReminderHour: const Value(9),
+          defaultReminderMinute: const Value(0),
+          defaultSortOrder: const Value('due_date_asc'),
+          schemaVersion: const Value(2),
+          updatedAt: DateTime.now().toUtc(),
+        ),
+      );
+    }
+  },
+  beforeOpen: (OpeningDetails details) async {
+    await customStatement('PRAGMA foreign_keys = ON;');
+    await customStatement('PRAGMA journal_mode = WAL;');
+    await customStatement('PRAGMA synchronous = NORMAL;');
+  },
+);
+```
+
+### 3-6-3 أوامر SQLite DDL المكافئة المنفذة في الترقية
+```sql
+-- الترقية التراكمية من V1 إلى V2
+-- 1. إضافة عمود وسيلة الدفع
+ALTER TABLE subscriptions ADD COLUMN payment_method_desc TEXT NULL;
+
+-- 2. إنشاء جدول الإعدادات
+CREATE TABLE IF NOT EXISTS settings (
+    id TEXT NOT NULL PRIMARY KEY,
+    theme_mode TEXT NOT NULL DEFAULT 'system',
+    default_currency TEXT NOT NULL DEFAULT 'USD',
+    default_reminder_days INTEGER NOT NULL DEFAULT 1 CHECK(default_reminder_days BETWEEN 0 AND 30),
+    default_reminder_hour INTEGER NOT NULL DEFAULT 9 CHECK(default_reminder_hour BETWEEN 0 AND 23),
+    default_reminder_minute INTEGER NOT NULL DEFAULT 0 CHECK(default_reminder_minute BETWEEN 0 AND 59),
+    default_sort_order TEXT NOT NULL DEFAULT 'due_date_asc',
+    last_backup_at INTEGER NULL,
+    schema_version INTEGER NOT NULL DEFAULT 2,
+    updated_at INTEGER NOT NULL
+);
+
+-- 3. غرس السجل الافتراضي الأحادي
+INSERT OR IGNORE INTO settings (
+    id, theme_mode, default_currency, default_reminder_days,
+    default_reminder_hour, default_reminder_minute, default_sort_order,
+    schema_version, updated_at
+) VALUES (
+    'app_settings', 'system', 'USD', 1, 9, 0, 'due_date_asc', 2, strftime('%s', 'now') * 1000
+);
+```
+
+### 3-6-4 مصفوفة التحقق واختبار عدم فقدان البيانات (Migration Verification Test Contract)
+يتم التحقق الآلي من نجاح الترقية في مسار الاختبارات (`test/unit/data/migrations/migration_v1_to_v2_test.dart`) وفق السيناريو الصارم التالي:
+
+1. **التهيئة (Arrange):**
+   - إنشاء قاعدة بيانات تجريبية في الذاكرة (`NativeDatabase.memory()`) وفق مخطط **الإصدار 1**.
+   - غرس بيانات حية تجريبية:
+     * 3 فئات في `categories` (فئة النظام وفئتان مخصصتان).
+     * 5 اشتراكات في `subscriptions` بمبالغ ووحدات صغرى متنوعة ودوريات مختلفة (`monthly`, `custom`, `yearly`).
+     * سجلين لتغير الأسعار في `price_history`.
+2. **التنفيذ (Act):**
+   - فتح الاتصال وتفعيل الترقية إلى **الإصدار 2** عبر استدعاء `database.customStatement('PRAGMA user_version = 2;')` وتنفيذ ترقية Drift.
+3. **التأكيد والتحقق (Assert - Zero Data Loss Verification):**
+   - **فحص الاشتراكات:** قراءة جميع الاشتراكات الـ 5 والتأكد من تطابق المعرفات والأسماء ومبالغ الوحدات الصغرى (`price_minor_units`) وتواريخ الاستحقاق بنسبة 100%.
+   - **فحص العمود الجديد:** التأكد من أن حقل `payment_method_desc` متاح للقراءة في الاشتراكات القديمة وتكون قيمته `NULL` دون أي انهيار.
+   - **إمكانية الكتابة والتعديل:** تحديث اشتراك قديم وإسناد قيمة للعمود الجديد (`payment_method_desc = 'Visa 4242'`) والتأكد من حفظها واسترجاعها بنجاح.
+   - **فحص جدول الإعدادات:** استعلام جدول `settings` والتأكد من وجود السجل الافتراضي الأحادي `'app_settings'` بالقيم الافتراضية الصحيحة.
+   - **فحص قيود السلامة:** محاولة إدخال سجل غير صالح في `settings` والتأكد من رفضه عبر قيود `CHECK`.
 
 ---
 
