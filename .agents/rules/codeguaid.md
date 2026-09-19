@@ -82,15 +82,24 @@ Any NO → the task is not done. Fix it or report it as blocked.
 
 ---
 
-## 2. ARCHITECTURE RULES (HARD BOUNDARIES)
+## 2. ARCHITECTURE RULES (SOLID & HARD BOUNDARIES)
 
-### 2.1 Layering
+### 2.0 SOLID Principles Mapping
+Every line of code and file in Sub Tracker MUST strictly adhere to the five SOLID principles:
+- **S — Single Responsibility Principle (SRP):** Each class and file has exactly ONE reason to change. Presentation widgets only render UI; Controllers/State only manage view state; UseCases only orchestrate single business actions; Entities only enforce domain rules; DAOs only execute queries. Never bundle multiple concerns into one file (§2.3).
+- **O — Open/Closed Principle (OCP):** Open for extension, closed for modification. All interactions between layers occur through abstract interfaces in `domain/repositories/`. Adding SQLite/Drift, In-Memory test mocks, or future Cloud Sync is done by implementing the interface, NEVER by modifying existing UseCases or UI widgets.
+- **L — Liskov Substitution Principle (LSP):** Any repository implementation in `data/` can seamlessly substitute the abstract domain contract without throwing unexpected raw exceptions or altering expected domain invariants.
+- **I — Interface Segregation Principle (ISP):** Interfaces are segregated, focused, and small. No client class is forced to depend on methods it does not use.
+- **D — Dependency Inversion Principle (DIP):** Dependencies point strictly inward. High-level modules (UseCases/Domain) never import low-level modules (Drift/SQLite/Data) or UI (Flutter/Presentation). Both high and low layers depend exclusively on abstract contracts (§2.4).
+
+### 2.1 Layering (Complete Decoupling)
 ```
 presentation  →  domain  ←  data
 ```
 - `presentation` may import `domain` only.
 - `data` may import `domain` only.
 - `domain` imports **nothing** from the other two layers and nothing from Flutter or any I/O package.
+- **Isolation Guarantee:** Changing a Screen/Widget in `presentation/` NEVER touches or breaks Domain or Database. Changing a Table/Query in `data/` NEVER touches or breaks Domain or UI.
 
 ### 2.2 Domain purity (zero tolerance)
 Forbidden anywhere under `lib/features/**/domain/` and `lib/core/domain/`:
@@ -102,13 +111,13 @@ Forbidden anywhere under `lib/features/**/domain/` and `lib/core/domain/`:
 
 Allowed: pure Dart, `dart:math`, `dart:async`, and project-internal domain code.
 
-### 2.3 Single Responsibility file isolation
+### 2.3 Single Responsibility file isolation (SOLID - S)
 Each of the following lives in its **own file**, never combined:
 `domain/entities/` · `domain/value_objects/` · `domain/repositories/` (abstract) · `domain/usecases/` · `domain/failures/`
 `data/tables/` · `data/daos/` · `data/datasources/` · `data/models/` · `data/repositories/` (implementations)
 `presentation/screens/` · `presentation/widgets/` · `presentation/state/` · `presentation/formatters/`
 
-### 2.4 Dependency Inversion
+### 2.4 Dependency Inversion (SOLID - D)
 - UseCases depend on abstract repository interfaces defined in `domain/repositories/`.
 - Implementations are wired only at the composition root (`lib/core/di/`).
 - A UseCase that imports a concrete implementation is an automatic rejection.
