@@ -34,6 +34,13 @@ class DueDate implements Comparable<DueDate> {
     return DueDate._(date: utcDate, originalAnchorDay: anchor);
   }
 
+  /// Convenience factory creating a [DueDate] with positional parameters.
+  factory DueDate(DateTime date, [int? originalAnchorDay]) =>
+      DueDate.create(date: date, originalAnchorDay: originalAnchorDay);
+
+  /// Convenience alias for [date].
+  DateTime get dateTime => date;
+
   /// Calculates the next occurrence based on the provided [BillingCycle],
   /// preserving the original anchor day across shorter months and leap years.
   DueDate nextOccurrence(BillingCycle cycle) {

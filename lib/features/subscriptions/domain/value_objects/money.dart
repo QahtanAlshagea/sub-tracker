@@ -71,6 +71,9 @@ class Money implements Comparable<Money> {
     return amountMinorUnits / factor;
   }
 
+  /// Convenience getter for the integer amount in minor units.
+  int get minorUnits => amountMinorUnits;
+
   /// Adds two [Money] objects. Both must share the same [currencyCode].
   Money operator +(Money other) {
     if (currencyCode != other.currencyCode) {
