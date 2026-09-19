@@ -280,7 +280,7 @@ void main() {
       int bestTimeMs = 999999;
       late List<dynamic> results;
 
-      for (int i = 0; i < 3; i++) {
+      for (int i = 0; i < 5; i++) {
         final stopwatch = Stopwatch()..start();
         final query = db.select(db.subscriptions)
           ..orderBy([

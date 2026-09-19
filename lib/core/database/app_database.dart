@@ -5,6 +5,10 @@ import 'package:drift/native.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
+import '../../features/subscriptions/data/daos/category_dao.dart';
+import '../../features/subscriptions/data/daos/price_history_dao.dart';
+import '../../features/subscriptions/data/daos/settings_dao.dart';
+import '../../features/subscriptions/data/daos/subscription_dao.dart';
 import '../../features/subscriptions/data/tables/categories_table.dart';
 import '../../features/subscriptions/data/tables/price_history_table.dart';
 import '../../features/subscriptions/data/tables/settings_table.dart';
@@ -18,9 +22,12 @@ const String kDefaultSettingsId = 'app_settings';
 
 /// The central Drift database class for Sub Tracker.
 ///
-/// Encapsulates all SQLite tables, migrations, and low-level connection configuration.
+/// Encapsulates all SQLite tables, migrations, DAOs, and low-level connection configuration.
 /// Implements ARCHITECTURE.md §3.
-@DriftDatabase(tables: [Categories, Subscriptions, PriceHistory, Settings])
+@DriftDatabase(
+  tables: [Categories, Subscriptions, PriceHistory, Settings],
+  daos: [CategoryDao, SubscriptionDao, PriceHistoryDao, SettingsDao],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
