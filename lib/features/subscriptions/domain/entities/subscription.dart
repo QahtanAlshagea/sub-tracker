@@ -192,6 +192,12 @@ class Subscription {
   bool get isArchived => status == SubscriptionStatus.archived;
   bool get isInTrash => status == SubscriptionStatus.inTrash;
 
+  /// Convenience getter for the original anchor day preserved in [dueDate].
+  int get originalAnchorDay => dueDate.originalAnchorDay;
+
+  /// Convenience getter for the next due date's calendar DateTime.
+  DateTime get nextDueDate => dueDate.dateTime;
+
   /// Advances this subscription's due date to the next recurring cycle.
   Subscription markAsRenewed({DateTime? at}) {
     final nowUtc = (at ?? DateTime.now()).toUtc();
