@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../localization/app_localizations.dart';
 import '../app_theme_extension.dart';
 import '../tokens/app_radii.dart';
 import '../tokens/app_spacing.dart';
@@ -74,46 +75,47 @@ class AccessibleStatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeExt = context.appTheme;
+    final l10n = AppLocalizations.of(context);
 
     final (label, icon, fgColor, bgColor) = switch (type) {
       StatusBadgeType.active => (
-        'نشط',
+        l10n?.active ?? 'نشط',
         Icons.check_circle_outline,
         themeExt.statusPaid,
         themeExt.successContainer,
       ),
       StatusBadgeType.paid => (
-        'مسدّد',
+        l10n?.paid ?? 'مسدّد',
         Icons.done_all,
         themeExt.statusPaid,
         themeExt.successContainer,
       ),
       StatusBadgeType.dueSoon => (
-        'مستحق قريباً',
+        l10n?.dueSoon ?? 'مستحق قريباً',
         Icons.schedule,
         themeExt.statusDueSoon,
         themeExt.warningContainer,
       ),
       StatusBadgeType.overdue => (
-        'متأخر',
+        l10n?.overdue ?? 'متأخر',
         Icons.error_outline,
         themeExt.statusOverdue,
         themeExt.warningContainer, // Or errorContainer
       ),
       StatusBadgeType.trial => (
-        'تجربة مجانية',
+        l10n?.trial ?? 'تجربة مجانية',
         Icons.stars_outlined,
         themeExt.warning,
         themeExt.warningContainer,
       ),
       StatusBadgeType.cancelled => (
-        'ملغى',
+        l10n?.cancelled ?? 'ملغى',
         Icons.cancel_outlined,
         themeExt.statusArchived,
         themeExt.borderSubtle,
       ),
       StatusBadgeType.archived => (
-        'مؤرشف',
+        l10n?.archived ?? 'مؤرشف',
         Icons.archive_outlined,
         themeExt.statusArchived,
         themeExt.borderSubtle,
