@@ -49,6 +49,11 @@ class CategoryDao extends DatabaseAccessor<AppDatabase>
     return into(categories).insert(companion);
   }
 
+  /// Inserts or updates a category on primary key conflict.
+  Future<int> upsertCategory(CategoriesCompanion companion) {
+    return into(categories).insertOnConflictUpdate(companion);
+  }
+
   /// Updates an existing category's properties.
   Future<bool> updateCategory(CategoriesCompanion companion) async {
     final updated = await (update(

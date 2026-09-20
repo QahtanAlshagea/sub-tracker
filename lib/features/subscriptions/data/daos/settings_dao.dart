@@ -44,6 +44,10 @@ class SettingsDao extends DatabaseAccessor<AppDatabase>
     );
   }
 
+  /// Alias for updateBackupTimestamp
+  Future<int> updateLastBackupAt(DateTime backupTime) =>
+      updateBackupTimestamp(backupTime);
+
   /// Updates the UI theme mode ('system', 'light', 'dark').
   Future<int> updateThemeMode(String themeMode) {
     return (update(
