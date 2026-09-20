@@ -61,4 +61,9 @@ class PriceHistoryDao extends DatabaseAccessor<AppDatabase>
   Future<int> deleteHistoryEntry(String id) {
     return (delete(priceHistory)..where((tbl) => tbl.id.equals(id))).go();
   }
+
+  /// Retrieves all price history records across all subscriptions.
+  Future<List<PriceHistoryData>> getAllHistory() {
+    return select(priceHistory).get();
+  }
 }
