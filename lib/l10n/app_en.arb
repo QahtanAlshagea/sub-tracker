@@ -1,0 +1,55 @@
+{
+  "@@locale": "en",
+  "appTitle": "Sub Tracker",
+  "@appTitle": {
+    "description": "Main application title"
+  },
+  "active": "Active",
+  "@active": {
+    "description": "Active subscription status"
+  },
+  "paid": "Paid",
+  "@paid": {
+    "description": "Paid subscription status"
+  },
+  "dueSoon": "Due Soon",
+  "@dueSoon": {
+    "description": "Due soon subscription status"
+  },
+  "overdue": "Overdue",
+  "@overdue": {
+    "description": "Overdue subscription status"
+  },
+  "trial": "Free Trial",
+  "@trial": {
+    "description": "Free trial subscription status"
+  },
+  "cancelled": "Cancelled",
+  "@cancelled": {
+    "description": "Cancelled subscription status"
+  },
+  "archived": "Archived",
+  "@archived": {
+    "description": "Archived subscription status"
+  },
+  "monthly": "Monthly",
+  "@monthly": {
+    "description": "Monthly billing cycle"
+  },
+  "yearly": "Yearly",
+  "@yearly": {
+    "description": "Yearly billing cycle"
+  },
+  "weekly": "Weekly",
+  "@weekly": {
+    "description": "Weekly billing cycle"
+  },
+  "daily": "Daily",
+  "@daily": {
+    "description": "Daily billing cycle"
+  },
+  "customCycle": "Custom Cycle",
+  "@customCycle": {
+    "description": "Custom billing cycle"
+  }
+}
