@@ -1,0 +1,55 @@
+{
+  "@@locale": "ar",
+  "appTitle": "متتبع الاشتراكات",
+  "@appTitle": {
+    "description": "عنوان التطبيق الرئيسي"
+  },
+  "active": "نشط",
+  "@active": {
+    "description": "حالة الاشتراك النشط"
+  },
+  "paid": "مسدّد",
+  "@paid": {
+    "description": "حالة الاشتراك المسدد"
+  },
+  "dueSoon": "مستحق قريباً",
+  "@dueSoon": {
+    "description": "حالة اقتراب موعد الاستحقاق"
+  },
+  "overdue": "متأخر",
+  "@overdue": {
+    "description": "حالة فوات موعد الاستحقاق"
+  },
+  "trial": "تجربة مجانية",
+  "@trial": {
+    "description": "حالة التجربة المجانية"
+  },
+  "cancelled": "ملغى",
+  "@cancelled": {
+    "description": "حالة الاشتراك الملغى"
+  },
+  "archived": "مؤرشف",
+  "@archived": {
+    "description": "حالة الاشتراك المؤرشف"
+  },
+  "monthly": "شهرياً",
+  "@monthly": {
+    "description": "دورية الفوترة الشهرية"
+  },
+  "yearly": "سنوياً",
+  "@yearly": {
+    "description": "دورية الفوترة السنوية"
+  },
+  "weekly": "أسبوعياً",
+  "@weekly": {
+    "description": "دورية الفوترة الأسبوعية"
+  },
+  "daily": "يومياً",
+  "@daily": {
+    "description": "دورية الفوترة اليومية"
+  },
+  "customCycle": "دورية مخصصة",
+  "@customCycle": {
+    "description": "دورية فوترة مخصصة بعدد أيام"
+  }
+}
