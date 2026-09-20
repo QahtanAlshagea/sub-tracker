@@ -44,3 +44,19 @@ class CorruptedDataFailure extends Failure {
     super.message = 'Stored data is corrupt or incompatible.',
   ]);
 }
+
+/// Incompatible schema migration or schema version mismatch failure (e.g. EC-30-3).
+class MigrationFailure extends Failure {
+  const MigrationFailure([
+    super.message =
+        'Schema version is incompatible with this version of the app.',
+  ]);
+}
+
+/// Attempting to export backup when database has no user records (EC-29-3).
+class EmptyDatabaseFailure extends Failure {
+  const EmptyDatabaseFailure([
+    super.message =
+        'Cannot export backup: database contains no subscriptions or custom categories.',
+  ]);
+}

@@ -16,6 +16,8 @@ sealed class Result<T> {
     Error<T>() => null,
   };
 
+  T? get valueOrNull => dataOrNull;
+
   Failure? get failureOrNull => switch (this) {
     Success<T>() => null,
     Error<T>(failure: final f) => f,
