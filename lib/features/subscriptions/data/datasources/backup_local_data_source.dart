@@ -27,6 +27,9 @@ abstract class BackupLocalDataSource {
     required BackupDataModel backupModel,
     required ImportStrategy strategy,
   });
+
+  /// Wipes all user records and restores default settings atomically.
+  Future<void> wipeDatabase();
 }
 
 /// Implementation of [BackupLocalDataSource] backed by Drift SQLite database.
@@ -282,6 +285,24 @@ class BackupLocalDataSourceImpl implements BackupLocalDataSource {
         importedSubscriptions: importedSubs,
         importedPriceHistories: importedHistory,
         strategy: strategy,
+      );
+    });
+  }
+
+  @override
+  Future<void> wipeDatabase() async {
+    await _db.transaction(() async {
+      await _db.delete(_db.subscriptions).go();
+      await (_db.delete(
+        _db.categories,
+      )..where((tbl) => tbl.isSystem.equals(false))).go();
+      await _settingsDao.upsertSettings(
+        SettingsCompanion.insert(
+          id: const Value(kDefaultSettingsId),
+          themeMode: const Value('system'),
+          defaultCurrency: const Value('USD'),
+          updatedAt: DateTime.now().toUtc(),
+        ),
       );
     });
   }

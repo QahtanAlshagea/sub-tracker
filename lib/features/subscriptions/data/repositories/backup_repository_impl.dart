@@ -93,4 +93,16 @@ class BackupRepositoryImpl implements BackupRepository {
       return Result.failure(DatabaseFailure(e.toString()));
     }
   }
+
+  @override
+  Future<Result<void>> wipeDatabase() async {
+    try {
+      await _dataSource.wipeDatabase();
+      return const Result.success(null);
+    } on SqliteException catch (e) {
+      return Result.failure(DatabaseFailure(e.message));
+    } catch (e) {
+      return Result.failure(DatabaseFailure(e.toString()));
+    }
+  }
 }

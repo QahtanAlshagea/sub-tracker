@@ -36,6 +36,9 @@ class FakeBackupRepository implements BackupRepository {
     required String jsonContent,
     required ImportStrategy strategy,
   }) async => throw UnimplementedError();
+
+  @override
+  Future<Result<void>> wipeDatabase() async => const Result.success(null);
 }
 
 void main() {
