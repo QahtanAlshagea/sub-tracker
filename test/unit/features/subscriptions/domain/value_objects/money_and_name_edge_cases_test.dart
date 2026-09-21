@@ -29,7 +29,6 @@ void main() {
           final extremelyLongInput = '9' * 100;
           final parsed = int.tryParse(extremelyLongInput);
 
-          // Either overflow check rejects it safely or validator catches price too high
           expect(() {
             if (parsed == null ||
                 parsed > SubscriptionValidator.maxPriceMinorUnits) {
