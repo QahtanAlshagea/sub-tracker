@@ -18,7 +18,9 @@ import 'features/subscriptions/domain/usecases/get_subscription_by_id_usecase.da
 import 'features/subscriptions/domain/usecases/get_subscriptions_usecase.dart';
 import 'features/subscriptions/domain/usecases/get_upcoming_projections_usecase.dart';
 import 'features/subscriptions/domain/usecases/import_backup_usecase.dart';
+import 'features/subscriptions/domain/usecases/move_subscription_to_trash_usecase.dart';
 import 'features/subscriptions/domain/usecases/renew_subscription_usecase.dart';
+import 'features/subscriptions/domain/usecases/restore_subscription_from_trash_usecase.dart';
 import 'features/subscriptions/domain/usecases/update_subscription_usecase.dart';
 import 'features/subscriptions/presentation/screens/add_edit_screen.dart';
 import 'features/subscriptions/presentation/screens/home_screen.dart';
@@ -47,6 +49,11 @@ void main() {
   // 2. Domain Layer UseCases
   final getSubscriptionsUseCase = GetSubscriptionsUseCase(subRepository);
   final renewSubscriptionUseCase = RenewSubscriptionUseCase(subRepository);
+  final moveSubscriptionToTrashUseCase = MoveSubscriptionToTrashUseCase(
+    subRepository,
+  );
+  final restoreSubscriptionFromTrashUseCase =
+      RestoreSubscriptionFromTrashUseCase(subRepository);
   final getCategoriesUseCase = GetCategoriesUseCase(catRepository);
   final createSubscriptionUseCase = CreateSubscriptionUseCase(subRepository);
   final updateSubscriptionUseCase = UpdateSubscriptionUseCase(subRepository);
@@ -72,6 +79,8 @@ void main() {
     getSubscriptionsUseCase: getSubscriptionsUseCase,
     renewSubscriptionUseCase: renewSubscriptionUseCase,
     getCategoriesUseCase: getCategoriesUseCase,
+    moveSubscriptionToTrashUseCase: moveSubscriptionToTrashUseCase,
+    restoreSubscriptionFromTrashUseCase: restoreSubscriptionFromTrashUseCase,
   );
 
   final summaryController = SummaryController(

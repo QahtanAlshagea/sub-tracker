@@ -27,7 +27,7 @@ class MinTouchTarget extends StatelessWidget {
         minWidth: minDimension,
         minHeight: minDimension,
       ),
-      child: Center(child: child),
+      child: Center(widthFactor: 1.0, heightFactor: 1.0, child: child),
     );
 
     if (onTap != null) {

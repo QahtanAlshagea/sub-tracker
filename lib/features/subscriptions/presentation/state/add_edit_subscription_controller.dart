@@ -118,6 +118,12 @@ class AddEditSubscriptionController extends ChangeNotifier {
   ViewState<AddEditFormState> _state = const ViewStateLoading();
   ViewState<AddEditFormState> get state => _state;
 
+  /// Returns current [AddEditFormState] if state is [ViewStateData].
+  AddEditFormState get formState => switch (_state) {
+    ViewStateData(data: final d) => d,
+    _ => throw StateError('FormState accessed before data loaded'),
+  };
+
   Subscription? _originalSubscription;
 
   /// Initializes the form in either Add mode or Edit mode.

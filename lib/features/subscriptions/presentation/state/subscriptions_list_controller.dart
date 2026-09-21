@@ -4,26 +4,36 @@ import '../../domain/entities/category.dart';
 import '../../domain/entities/subscription.dart';
 import '../../domain/usecases/get_categories_usecase.dart';
 import '../../domain/usecases/get_subscriptions_usecase.dart';
+import '../../domain/usecases/move_subscription_to_trash_usecase.dart';
 import '../../domain/usecases/renew_subscription_usecase.dart';
+import '../../domain/usecases/restore_subscription_from_trash_usecase.dart';
 import '../../domain/value_objects/subscription_status.dart';
 import 'view_state.dart';
 
 /// MVVM state controller for managing active subscriptions list.
 ///
 /// Encapsulates state transformations, loading, empty, and error view states.
-/// Complies with [FR-02], [US-05], and [codeguaid.md].
+/// Complies with [FR-02], [FR-09], [US-05], [US-12], and [codeguaid.md].
 class SubscriptionsListController extends ChangeNotifier {
   final GetSubscriptionsUseCase _getSubscriptionsUseCase;
   final RenewSubscriptionUseCase _renewSubscriptionUseCase;
   final GetCategoriesUseCase _getCategoriesUseCase;
+  final MoveSubscriptionToTrashUseCase? _moveSubscriptionToTrashUseCase;
+  final RestoreSubscriptionFromTrashUseCase?
+  _restoreSubscriptionFromTrashUseCase;
 
   SubscriptionsListController({
     required GetSubscriptionsUseCase getSubscriptionsUseCase,
     required RenewSubscriptionUseCase renewSubscriptionUseCase,
     required GetCategoriesUseCase getCategoriesUseCase,
+    MoveSubscriptionToTrashUseCase? moveSubscriptionToTrashUseCase,
+    RestoreSubscriptionFromTrashUseCase? restoreSubscriptionFromTrashUseCase,
   }) : _getSubscriptionsUseCase = getSubscriptionsUseCase,
        _renewSubscriptionUseCase = renewSubscriptionUseCase,
-       _getCategoriesUseCase = getCategoriesUseCase;
+       _getCategoriesUseCase = getCategoriesUseCase,
+       _moveSubscriptionToTrashUseCase = moveSubscriptionToTrashUseCase,
+       _restoreSubscriptionFromTrashUseCase =
+           restoreSubscriptionFromTrashUseCase;
 
   ViewState<List<Subscription>> _state = const ViewStateLoading();
   ViewState<List<Subscription>> get state => _state;
@@ -98,6 +108,52 @@ class SubscriptionsListController extends ChangeNotifier {
       if (result.isSuccess) {
         await loadSubscriptions();
         return true;
+      }
+      return false;
+    } finally {
+      _isProcessingAction = false;
+      notifyListeners();
+    }
+  }
+
+  /// Deletes a subscription safely by moving it to the trash ([US-12], [FR-09]).
+  Future<bool> deleteSubscription(String subscriptionId) async {
+    if (_isProcessingAction) return false;
+
+    _isProcessingAction = true;
+    notifyListeners();
+
+    try {
+      if (_moveSubscriptionToTrashUseCase != null) {
+        final result = await _moveSubscriptionToTrashUseCase(subscriptionId);
+        if (result.isSuccess) {
+          await loadSubscriptions();
+          return true;
+        }
+      }
+      return false;
+    } finally {
+      _isProcessingAction = false;
+      notifyListeners();
+    }
+  }
+
+  /// Restores a subscription from the trash back to active ([US-12], [US-14]).
+  Future<bool> restoreSubscription(String subscriptionId) async {
+    if (_isProcessingAction) return false;
+
+    _isProcessingAction = true;
+    notifyListeners();
+
+    try {
+      if (_restoreSubscriptionFromTrashUseCase != null) {
+        final result = await _restoreSubscriptionFromTrashUseCase(
+          subscriptionId,
+        );
+        if (result.isSuccess) {
+          await loadSubscriptions();
+          return true;
+        }
       }
       return false;
     } finally {
