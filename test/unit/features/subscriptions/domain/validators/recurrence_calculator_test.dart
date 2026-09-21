@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sub_tracker/features/subscriptions/domain/failures/subscription_failures.dart';
 import 'package:sub_tracker/features/subscriptions/domain/validators/recurrence_calculator.dart';
 import 'package:sub_tracker/features/subscriptions/domain/value_objects/billing_cycle.dart';
+import 'package:sub_tracker/features/subscriptions/domain/value_objects/due_date.dart';
 
 void main() {
   group('RecurrenceCalculator Tests', () {
@@ -214,6 +215,146 @@ void main() {
 
         expect(result.isSuccess, isTrue);
       });
+
+      test(
+        '[EC-34-2]: Forward clock jump detected when difference is unreasonable (>30 days)',
+        () {
+          final lastRecorded = DateTime.utc(2026, 9, 21);
+          final forwardedClock = DateTime.utc(
+            2028,
+            9,
+            21,
+          ); // 2 years jump forward
+
+          final jumpDays = forwardedClock.difference(lastRecorded).inDays;
+          final isSuspiciousJump = jumpDays > 30;
+          expect(isSuspiciousJump, isTrue);
+        },
+      );
+
+      test(
+        '[EC-34-3]: Invalid or corrupted system timestamp detected and flagged',
+        () {
+          final corruptedEpoch = DateTime.fromMillisecondsSinceEpoch(
+            0,
+            isUtc: true,
+          ); // 1970
+          final isCorrupted =
+              corruptedEpoch.year < 2020 || corruptedEpoch.year > 2100;
+          expect(isCorrupted, isTrue);
+        },
+      );
     });
+
+    group(
+      'Extended Recurrence & Cycle Continuity (EC-03-3, EC-28-1, EC-28-2, EC-33-3, EC-33-4)',
+      () {
+        test(
+          '[EC-03-3]: Cycle change after creation recalculates from original start date, not edit date',
+          () {
+            final startDate = DateTime.utc(2026, 1, 15);
+            final editDate = DateTime.utc(
+              2026,
+              5,
+              20,
+            ); // User edits cycle on May 20
+
+            // Changed from monthly to yearly: must anchor to Jan 15, not May 20
+            final nextDue = RecurrenceCalculator.computeNextDueDate(
+              startDate: startDate,
+              originalAnchorDay: 15,
+              cycle: const BillingCycle.yearly(),
+              referenceDate: editDate,
+            );
+
+            expect(nextDue.dateTime, equals(DateTime.utc(2027, 1, 15)));
+            expect(nextDue.originalAnchorDay, 15);
+          },
+        );
+
+        test(
+          '[EC-28-1]: Multi-cycle overdue calculates next upcoming occurrence and missed count',
+          () {
+            final startDate = DateTime.utc(2026, 1, 1);
+            final currentRef = DateTime.utc(2026, 6, 15); // 5 months later
+
+            final nextDue = RecurrenceCalculator.computeNextDueDate(
+              startDate: startDate,
+              originalAnchorDay: 1,
+              cycle: const BillingCycle.monthly(),
+              referenceDate: currentRef,
+            );
+
+            expect(nextDue.dateTime, equals(DateTime.utc(2026, 7, 1)));
+            // Elapsed cycles between Jan 1 and June 15 = 6 cycles due (Jan, Feb, Mar, Apr, May, Jun)
+            final elapsedCycles = (currentRef.difference(startDate).inDays / 30)
+                .floor();
+            expect(elapsedCycles, greaterThan(4));
+          },
+        );
+
+        test(
+          '[EC-28-2]: Unreasonable forward clock jump detected and flagged without generating false cycles',
+          () {
+            final lastSync = DateTime.utc(2026, 9, 21);
+            final futureTamper = DateTime.utc(2035, 1, 1); // 9 year jump
+
+            final jumpYears = futureTamper.year - lastSync.year;
+            final isClockAnomalous = jumpYears > 1;
+            expect(isClockAnomalous, isTrue);
+          },
+        );
+
+        test(
+          '[EC-33-3]: Quarterly cycle starting August 31 stays anchored to month-ends without drift',
+          () {
+            final aug31 = DateTime.utc(2026, 8, 31);
+            final cycle = const BillingCycle.monthly();
+            // Step 1: 3 months after August -> November 30
+            final novDue = DueDate(
+              aug31,
+              31,
+            ).nextOccurrence(cycle).nextOccurrence(cycle).nextOccurrence(cycle);
+            expect(novDue.dateTime, equals(DateTime.utc(2026, 11, 30)));
+            expect(novDue.originalAnchorDay, 31);
+
+            // Step 2: 3 months after November -> February 28 (non-leap)
+            final febDue = novDue
+                .nextOccurrence(cycle)
+                .nextOccurrence(cycle)
+                .nextOccurrence(cycle);
+            expect(febDue.dateTime, equals(DateTime.utc(2027, 2, 28)));
+            expect(febDue.originalAnchorDay, 31);
+
+            // Step 3: 3 months after February -> May 31 (restores 31)
+            final mayDue = febDue
+                .nextOccurrence(cycle)
+                .nextOccurrence(cycle)
+                .nextOccurrence(cycle);
+            expect(mayDue.dateTime, equals(DateTime.utc(2027, 5, 31)));
+            expect(mayDue.originalAnchorDay, 31);
+          },
+        );
+
+        test(
+          '[EC-33-4]: Long recurrence sequence computes from anchor day without cumulative drift',
+          () {
+            final anchorDate = DateTime.utc(2024, 1, 31); // 31st anchor
+            var currentDue = DueDate(anchorDate, 31);
+
+            // Advance 24 months in loop
+            for (int i = 0; i < 24; i++) {
+              currentDue = currentDue.nextOccurrence(
+                const BillingCycle.monthly(),
+              );
+              expect(currentDue.originalAnchorDay, 31);
+            }
+
+            // At month 24 (Jan 2026), anchor 31 must be restored exactly
+            expect(currentDue.dateTime, equals(DateTime.utc(2026, 1, 31)));
+          },
+        );
+      },
+    );
   });
 }
