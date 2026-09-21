@@ -4,6 +4,18 @@
   "@appTitle": {
     "description": "عنوان التطبيق الرئيسي"
   },
+  "subscriptionsTab": "الاشتراكات",
+  "@subscriptionsTab": {
+    "description": "تبويب قائمة الاشتراكات"
+  },
+  "summaryTab": "الملخص",
+  "@summaryTab": {
+    "description": "تبويب لوحة الملخص والتحليلات"
+  },
+  "settingsTab": "الإعدادات",
+  "@settingsTab": {
+    "description": "تبويب الإعدادات العامة"
+  },
   "active": "نشط",
   "@active": {
     "description": "حالة الاشتراك النشط"
@@ -51,5 +63,283 @@
   "customCycle": "دورية مخصصة",
   "@customCycle": {
     "description": "دورية فوترة مخصصة بعدد أيام"
+  },
+  "addSubscription": "إضافة اشتراك جديد",
+  "@addSubscription": {
+    "description": "عنوان شاشة إضافة اشتراك جديد"
+  },
+  "editSubscription": "تعديل الاشتراك",
+  "@editSubscription": {
+    "description": "عنوان شاشة تعديل الاشتراك"
+  },
+  "save": "حفظ",
+  "@save": {
+    "description": "زر الحفظ"
+  },
+  "cancel": "إلغاء",
+  "@cancel": {
+    "description": "زر الإلغاء"
+  },
+  "retry": "إعادة المحاولة",
+  "@retry": {
+    "description": "زر إعادة المحاولة"
+  },
+  "delete": "حذف",
+  "@delete": {
+    "description": "زر الحذف"
+  },
+  "edit": "تعديل",
+  "@edit": {
+    "description": "زر التعديل"
+  },
+  "archive": "أرشفة",
+  "@archive": {
+    "description": "زر الأرشفة"
+  },
+  "restore": "استعادة",
+  "@restore": {
+    "description": "زر الاستعادة"
+  },
+  "markAsPaid": "تسديد",
+  "@markAsPaid": {
+    "description": "زر تعليم كمسدد"
+  },
+  "renew": "تجديد",
+  "@renew": {
+    "description": "زر تجديد الاشتراك"
+  },
+  "close": "إغلاق",
+  "@close": {
+    "description": "زر الإغلاق"
+  },
+  "confirm": "تأكيد",
+  "@confirm": {
+    "description": "زر التأكيد"
+  },
+  "subscriptionName": "اسم الاشتراك",
+  "@subscriptionName": {
+    "description": "حقل اسم الاشتراك"
+  },
+  "subscriptionPrice": "المبلغ / القيمة",
+  "@subscriptionPrice": {
+    "description": "حقل المبلغ أو القيمة"
+  },
+  "currency": "العملة",
+  "@currency": {
+    "description": "حقل العملة"
+  },
+  "billingCycle": "دورية الفوترة",
+  "@billingCycle": {
+    "description": "حقل دورية الفوترة"
+  },
+  "startDate": "تاريخ البدء",
+  "@startDate": {
+    "description": "حقل تاريخ البدء"
+  },
+  "nextDueDate": "تاريخ الاستحقاق القادم",
+  "@nextDueDate": {
+    "description": "حقل تاريخ الاستحقاق القادم"
+  },
+  "category": "الفئة",
+  "@category": {
+    "description": "حقل فئة الاشتراك"
+  },
+  "uncategorized": "غير مصنف",
+  "@uncategorized": {
+    "description": "اسم الفئة الافتراضية"
+  },
+  "notes": "ملاحظات (اختياري)",
+  "@notes": {
+    "description": "حقل الملاحظات الاختياري"
+  },
+  "paymentMethod": "وسيلة الدفع (اختياري)",
+  "@paymentMethod": {
+    "description": "حقل وصف وسيلة الدفع"
+  },
+  "customDaysInterval": "عدد الأيام للدورية المخصصة",
+  "@customDaysInterval": {
+    "description": "حقل عدد أيام الدورية المخصصة"
+  },
+  "nameRequired": "يرجى إدخال اسم الاشتراك",
+  "@nameRequired": {
+    "description": "رسالة خطأ عند ترك الاسم فارغاً"
+  },
+  "nameTooLong": "لا يمكن أن يتجاوز الاسم 60 حرفاً",
+  "@nameTooLong": {
+    "description": "رسالة خطأ عند تجاوز الحد الأقصى للاسم"
+  },
+  "pricePositive": "يجب أن يكون المبلغ أكبر من صفر",
+  "@pricePositive": {
+    "description": "رسالة خطأ عند إدخال مبلغ غير موجب"
+  },
+  "emptySubscriptionsTitle": "لا توجد اشتراكات مضافة بعد",
+  "@emptySubscriptionsTitle": {
+    "description": "عنوان الحالة الفارغة لقائمة الاشتراكات"
+  },
+  "emptySubscriptionsSubtitle": "ابدأ بإضافة أول التزام دوري لتتبع نفقاتك ومواعيد تجديدك.",
+  "@emptySubscriptionsSubtitle": {
+    "description": "شرح الحالة الفارغة لقائمة الاشتراكات"
+  },
+  "addFirstSubscription": "إضافة أول اشتراك",
+  "@addFirstSubscription": {
+    "description": "زر الإجراء الرئيسي في الحالة الفارغة"
+  },
+  "errorLoadingSubscriptions": "تعذر تحميل قائمة الاشتراكات",
+  "@errorLoadingSubscriptions": {
+    "description": "رسالة الخطأ عند فشل جلب الاشتراكات"
+  },
+  "emptySummaryTitle": "لا توجد بيانات كافية للتحليل",
+  "@emptySummaryTitle": {
+    "description": "عنوان الحالة الفارغة للوحة الملخص"
+  },
+  "emptySummarySubtitle": "أضف اشتراكاتك لعرض التحليلات والمكافئ الشهري والسنوي وتوزيع الفئات.",
+  "@emptySummarySubtitle": {
+    "description": "شرح الحالة الفارغة للوحة الملخص"
+  },
+  "errorLoadingSummary": "تعذر تحميل ملخص التحليلات المالية",
+  "@errorLoadingSummary": {
+    "description": "رسالة الخطأ في لوحة الملخص"
+  },
+  "monthlyEquivalent": "المكافئ الشهري",
+  "@monthlyEquivalent": {
+    "description": "بطاقة المكافئ الشهري"
+  },
+  "annualEquivalent": "المكافئ السنوي",
+  "@annualEquivalent": {
+    "description": "بطاقة المكافئ السنوي"
+  },
+  "activeSubscriptionsCount": "الاشتراكات النشطة",
+  "@activeSubscriptionsCount": {
+    "description": "عدد الاشتراكات النشطة"
+  },
+  "highestCostSubscription": "الاشتراك الأعلى كلفة",
+  "@highestCostSubscription": {
+    "description": "عنوان الاشتراك الأعلى كلفة"
+  },
+  "noHighestCost": "لا يوجد اشتراك نشط",
+  "@noHighestCost": {
+    "description": "حالة عدم وجود اشتراك أعلى كلفة"
+  },
+  "categoryDistribution": "توزيع الإنفاق حسب الفئات",
+  "@categoryDistribution": {
+    "description": "عنوان توزيع الإنفاق"
+  },
+  "upcomingRenewals": "الاستحقاقات القادمة",
+  "@upcomingRenewals": {
+    "description": "عنوان الاستحقاقات القادمة"
+  },
+  "noUpcomingRenewals": "لا توجد استحقاقات قادمة هذا الشهر",
+  "@noUpcomingRenewals": {
+    "description": "حالة عدم وجود استحقاقات قادمة"
+  },
+  "settingsTitle": "الإعدادات العامة",
+  "@settingsTitle": {
+    "description": "عنوان شاشة الإعدادات"
+  },
+  "appearance": "المظهر والسمة",
+  "@appearance": {
+    "description": "قسم المظهر والسمة"
+  },
+  "themeSystem": "تلقائي (حسب النظام)",
+  "@themeSystem": {
+    "description": "خيار السمة حسب النظام"
+  },
+  "themeLight": "فاتح",
+  "@themeLight": {
+    "description": "خيار السمة الفاتحة"
+  },
+  "themeDark": "داكن",
+  "@themeDark": {
+    "description": "خيار السمة الداكنة"
+  },
+  "defaultCurrency": "العملة الافتراضية",
+  "@defaultCurrency": {
+    "description": "قسم العملة الافتراضية"
+  },
+  "dataManagement": "إدارة البيانات والنسخ الاحتياطي",
+  "@dataManagement": {
+    "description": "قسم إدارة البيانات"
+  },
+  "exportBackup": "تصدير نسخة احتياطية",
+  "@exportBackup": {
+    "description": "خيار تصدير النسخة الاحتياطية"
+  },
+  "importBackup": "استيراد نسخة احتياطية",
+  "@importBackup": {
+    "description": "خيار استيراد النسخة الاحتياطية"
+  },
+  "wipeData": "مسح جميع البيانات نهائياً",
+  "@wipeData": {
+    "description": "خيار مسح كافة البيانات"
+  },
+  "wipeDataConfirmTitle": "تأكيد مسح البيانات نهائياً",
+  "@wipeDataConfirmTitle": {
+    "description": "عنوان حوار مسح البيانات"
+  },
+  "wipeDataConfirmPrompt": "اكتب كلمة «مسح» لتأكيد الحذف النهائي وغير القابل للتراجع لكافة بيانات التطبيق:",
+  "@wipeDataConfirmPrompt": {
+    "description": "نص التوجيه لكتابة كلمة التأكيد"
+  },
+  "wipeDataKeyword": "مسح",
+  "@wipeDataKeyword": {
+    "description": "الكلمة الدقيقة المطلوبة لمسح البيانات"
+  },
+  "wipeDataSuccess": "تم مسح جميع البيانات بنجاح",
+  "@wipeDataSuccess": {
+    "description": "إشعار نجاح مسح البيانات"
+  },
+  "backupExportSuccess": "تم تصدير النسخة الاحتياطية بنجاح",
+  "@backupExportSuccess": {
+    "description": "إشعار نجاح تصدير النسخة الاحتياطية"
+  },
+  "backupImportSuccess": "تم استيراد النسخة الاحتياطية بنجاح",
+  "@backupImportSuccess": {
+    "description": "إشعار نجاح استيراد النسخة الاحتياطية"
+  },
+  "appVersionInfo": "إصدار التطبيق: 1.0.0",
+  "@appVersionInfo": {
+    "description": "نص إصدار التطبيق"
+  },
+  "schemaVersionInfo": "إصدار قاعدة البيانات: V2",
+  "@schemaVersionInfo": {
+    "description": "نص إصدار مخطط قاعدة البيانات"
+  },
+  "daysRemaining": "باقٍ {days} يوم",
+  "@daysRemaining": {
+    "description": "العد التنازلي للأيام المتبقية",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "daysOverdue": "متأخر {days} يوم",
+  "@daysOverdue": {
+    "description": "عدد الأيام المتأخرة",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "dueToday": "يستحق اليوم",
+  "@dueToday": {
+    "description": "الاستحقاق في اليوم الحالي"
+  },
+  "unsavedChangesTitle": "تغييرات غير محفوظة",
+  "@unsavedChangesTitle": {
+    "description": "عنوان حوار التغييرات غير المحفوظة"
+  },
+  "unsavedChangesMessage": "لديك تعديلات غير محفوظة. هل أنت متأكد من رغبتك في المغادرة وتجاهل التغييرات؟",
+  "@unsavedChangesMessage": {
+    "description": "رسالة حوار التغييرات غير المحفوظة"
+  },
+  "discardChanges": "تجاهل التغييرات",
+  "@discardChanges": {
+    "description": "زر تجاهل التغييرات"
+  },
+  "keepEditing": "متابعة التعديل",
+  "@keepEditing": {
+    "description": "زر متابعة التعديل"
   }
 }

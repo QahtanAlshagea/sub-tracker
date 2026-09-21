@@ -20,4 +20,8 @@ abstract class BackupRepository {
     required String jsonContent,
     required ImportStrategy strategy,
   });
+
+  /// Permanently and atomically deletes all user records (subscriptions, price history, custom categories),
+  /// restoring the database to a clean initial state while preserving the system uncategorized category ([US-39]).
+  Future<Result<void>> wipeDatabase();
 }

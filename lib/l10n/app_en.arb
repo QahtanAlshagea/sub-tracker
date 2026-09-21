@@ -4,6 +4,18 @@
   "@appTitle": {
     "description": "Main application title"
   },
+  "subscriptionsTab": "Subscriptions",
+  "@subscriptionsTab": {
+    "description": "Subscriptions tab"
+  },
+  "summaryTab": "Summary",
+  "@summaryTab": {
+    "description": "Summary analytics tab"
+  },
+  "settingsTab": "Settings",
+  "@settingsTab": {
+    "description": "Settings tab"
+  },
   "active": "Active",
   "@active": {
     "description": "Active subscription status"
@@ -51,5 +63,283 @@
   "customCycle": "Custom Cycle",
   "@customCycle": {
     "description": "Custom billing cycle"
+  },
+  "addSubscription": "Add Subscription",
+  "@addSubscription": {
+    "description": "Title of add subscription screen"
+  },
+  "editSubscription": "Edit Subscription",
+  "@editSubscription": {
+    "description": "Title of edit subscription screen"
+  },
+  "save": "Save",
+  "@save": {
+    "description": "Save button label"
+  },
+  "cancel": "Cancel",
+  "@cancel": {
+    "description": "Cancel button label"
+  },
+  "retry": "Retry",
+  "@retry": {
+    "description": "Retry button label"
+  },
+  "delete": "Delete",
+  "@delete": {
+    "description": "Delete button label"
+  },
+  "edit": "Edit",
+  "@edit": {
+    "description": "Edit button label"
+  },
+  "archive": "Archive",
+  "@archive": {
+    "description": "Archive button label"
+  },
+  "restore": "Restore",
+  "@restore": {
+    "description": "Restore button label"
+  },
+  "markAsPaid": "Mark as Paid",
+  "@markAsPaid": {
+    "description": "Mark as paid button label"
+  },
+  "renew": "Renew",
+  "@renew": {
+    "description": "Renew button label"
+  },
+  "close": "Close",
+  "@close": {
+    "description": "Close button label"
+  },
+  "confirm": "Confirm",
+  "@confirm": {
+    "description": "Confirm button label"
+  },
+  "subscriptionName": "Subscription Name",
+  "@subscriptionName": {
+    "description": "Subscription name field"
+  },
+  "subscriptionPrice": "Price / Amount",
+  "@subscriptionPrice": {
+    "description": "Price or amount field"
+  },
+  "currency": "Currency",
+  "@currency": {
+    "description": "Currency field"
+  },
+  "billingCycle": "Billing Cycle",
+  "@billingCycle": {
+    "description": "Billing cycle field"
+  },
+  "startDate": "Start Date",
+  "@startDate": {
+    "description": "Start date field"
+  },
+  "nextDueDate": "Next Due Date",
+  "@nextDueDate": {
+    "description": "Next due date field"
+  },
+  "category": "Category",
+  "@category": {
+    "description": "Category field"
+  },
+  "uncategorized": "Uncategorized",
+  "@uncategorized": {
+    "description": "Default category name"
+  },
+  "notes": "Notes (Optional)",
+  "@notes": {
+    "description": "Optional notes field"
+  },
+  "paymentMethod": "Payment Method (Optional)",
+  "@paymentMethod": {
+    "description": "Optional payment method field"
+  },
+  "customDaysInterval": "Days interval for custom cycle",
+  "@customDaysInterval": {
+    "description": "Custom cycle days field"
+  },
+  "nameRequired": "Please enter subscription name",
+  "@nameRequired": {
+    "description": "Error message when name is empty"
+  },
+  "nameTooLong": "Subscription name cannot exceed 60 characters",
+  "@nameTooLong": {
+    "description": "Error message when name is too long"
+  },
+  "pricePositive": "Amount must be greater than zero",
+  "@pricePositive": {
+    "description": "Error message when amount is not positive"
+  },
+  "emptySubscriptionsTitle": "No subscriptions yet",
+  "@emptySubscriptionsTitle": {
+    "description": "Empty state title for subscriptions list"
+  },
+  "emptySubscriptionsSubtitle": "Start by adding your first subscription to track expenses and renewal dates.",
+  "@emptySubscriptionsSubtitle": {
+    "description": "Empty state subtitle for subscriptions list"
+  },
+  "addFirstSubscription": "Add First Subscription",
+  "@addFirstSubscription": {
+    "description": "Primary action button in empty state"
+  },
+  "errorLoadingSubscriptions": "Failed to load subscriptions",
+  "@errorLoadingSubscriptions": {
+    "description": "Error message when loading subscriptions fails"
+  },
+  "emptySummaryTitle": "Not enough data for analytics",
+  "@emptySummaryTitle": {
+    "description": "Empty state title for summary dashboard"
+  },
+  "emptySummarySubtitle": "Add subscriptions to see financial metrics, monthly equivalents, and projections.",
+  "@emptySummarySubtitle": {
+    "description": "Empty state subtitle for summary dashboard"
+  },
+  "errorLoadingSummary": "Failed to load financial summary",
+  "@errorLoadingSummary": {
+    "description": "Error message in summary screen"
+  },
+  "monthlyEquivalent": "Monthly Equivalent",
+  "@monthlyEquivalent": {
+    "description": "Monthly equivalent card title"
+  },
+  "annualEquivalent": "Annual Equivalent",
+  "@annualEquivalent": {
+    "description": "Annual equivalent card title"
+  },
+  "activeSubscriptionsCount": "Active Subscriptions",
+  "@activeSubscriptionsCount": {
+    "description": "Active subscriptions count"
+  },
+  "highestCostSubscription": "Highest Expense",
+  "@highestCostSubscription": {
+    "description": "Highest expense card title"
+  },
+  "noHighestCost": "No active subscription",
+  "@noHighestCost": {
+    "description": "Label when no highest cost exists"
+  },
+  "categoryDistribution": "Spending by Category",
+  "@categoryDistribution": {
+    "description": "Category distribution card title"
+  },
+  "upcomingRenewals": "Upcoming Renewals",
+  "@upcomingRenewals": {
+    "description": "Upcoming renewals section"
+  },
+  "noUpcomingRenewals": "No renewals due this month",
+  "@noUpcomingRenewals": {
+    "description": "Label when no upcoming renewals"
+  },
+  "settingsTitle": "Settings",
+  "@settingsTitle": {
+    "description": "Settings screen title"
+  },
+  "appearance": "Appearance & Theme",
+  "@appearance": {
+    "description": "Appearance section"
+  },
+  "themeSystem": "System Default",
+  "@themeSystem": {
+    "description": "System theme option"
+  },
+  "themeLight": "Light",
+  "@themeLight": {
+    "description": "Light theme option"
+  },
+  "themeDark": "Dark",
+  "@themeDark": {
+    "description": "Dark theme option"
+  },
+  "defaultCurrency": "Default Currency",
+  "@defaultCurrency": {
+    "description": "Default currency section"
+  },
+  "dataManagement": "Data Management & Backups",
+  "@dataManagement": {
+    "description": "Data management section"
+  },
+  "exportBackup": "Export Backup",
+  "@exportBackup": {
+    "description": "Export backup option"
+  },
+  "importBackup": "Import Backup",
+  "@importBackup": {
+    "description": "Import backup option"
+  },
+  "wipeData": "Wipe All Data Permanently",
+  "@wipeData": {
+    "description": "Wipe data option"
+  },
+  "wipeDataConfirmTitle": "Permanently Wipe All Data",
+  "@wipeDataConfirmTitle": {
+    "description": "Wipe data dialog title"
+  },
+  "wipeDataConfirmPrompt": "Type «DELETE» to permanently wipe all application data:",
+  "@wipeDataConfirmPrompt": {
+    "description": "Prompt message for confirmation word"
+  },
+  "wipeDataKeyword": "DELETE",
+  "@wipeDataKeyword": {
+    "description": "Exact confirmation word in English"
+  },
+  "wipeDataSuccess": "All data wiped successfully",
+  "@wipeDataSuccess": {
+    "description": "Wipe success notification"
+  },
+  "backupExportSuccess": "Backup exported successfully",
+  "@backupExportSuccess": {
+    "description": "Backup export success notification"
+  },
+  "backupImportSuccess": "Backup imported successfully",
+  "@backupImportSuccess": {
+    "description": "Backup import success notification"
+  },
+  "appVersionInfo": "App Version: 1.0.0",
+  "@appVersionInfo": {
+    "description": "App version string"
+  },
+  "schemaVersionInfo": "Database Schema: V2",
+  "@schemaVersionInfo": {
+    "description": "Database schema string"
+  },
+  "daysRemaining": "{days} days left",
+  "@daysRemaining": {
+    "description": "Days remaining countdown",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "daysOverdue": "{days} days overdue",
+  "@daysOverdue": {
+    "description": "Days overdue countdown",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "dueToday": "Due today",
+  "@dueToday": {
+    "description": "Due today label"
+  },
+  "unsavedChangesTitle": "Unsaved Changes",
+  "@unsavedChangesTitle": {
+    "description": "Unsaved changes dialog title"
+  },
+  "unsavedChangesMessage": "You have unsaved changes. Are you sure you want to discard them?",
+  "@unsavedChangesMessage": {
+    "description": "Unsaved changes dialog message"
+  },
+  "discardChanges": "Discard Changes",
+  "@discardChanges": {
+    "description": "Discard changes button"
+  },
+  "keepEditing": "Keep Editing",
+  "@keepEditing": {
+    "description": "Keep editing button"
   }
 }

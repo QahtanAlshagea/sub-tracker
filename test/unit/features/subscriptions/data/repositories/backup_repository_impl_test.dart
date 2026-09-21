@@ -31,6 +31,9 @@ class FakeErrorBackupLocalDataSource implements BackupLocalDataSource {
 
   @override
   Future<void> updateLastBackupAt(DateTime timestamp) => throw errorToThrow;
+
+  @override
+  Future<void> wipeDatabase() => throw errorToThrow;
 }
 
 void main() {
@@ -210,5 +213,19 @@ void main() {
         expect(result.failureOrNull, isA<StorageFullFailure>());
       },
     );
+
+    test('wipeDatabase succeeds and delegates to dataSource', () async {
+      final result = await repository.wipeDatabase();
+      expect(result.isSuccess, isTrue);
+    });
+
+    test('wipeDatabase maps database exception to DatabaseFailure', () async {
+      final repoWithError = BackupRepositoryImpl(
+        FakeErrorBackupLocalDataSource(Exception('Disk locked')),
+      );
+      final result = await repoWithError.wipeDatabase();
+      expect(result.isFailure, isTrue);
+      expect(result.failureOrNull, isA<DatabaseFailure>());
+    });
   });
 }
