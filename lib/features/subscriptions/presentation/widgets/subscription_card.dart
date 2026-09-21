@@ -23,6 +23,7 @@ class SubscriptionCard extends StatelessWidget {
   final Category? category;
   final VoidCallback? onTap;
   final VoidCallback? onMarkPaid;
+  final VoidCallback? onDelete;
 
   const SubscriptionCard({
     super.key,
@@ -30,6 +31,7 @@ class SubscriptionCard extends StatelessWidget {
     this.category,
     this.onTap,
     this.onMarkPaid,
+    this.onDelete,
   });
 
   @override
@@ -185,25 +187,49 @@ class SubscriptionCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  if (onMarkPaid != null)
-                    MinTouchTarget(
-                      key: const Key('subscription_card_pay_button'),
-                      child: TextButton.icon(
-                        onPressed: onMarkPaid,
-                        icon: const Icon(
-                          Icons.check_circle_outline_rounded,
-                          size: 18,
-                        ),
-                        label: Text(l10n?.markAsPaid ?? 'تسديد'),
-                        style: TextButton.styleFrom(
-                          visualDensity: VisualDensity.compact,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.sm,
-                            vertical: AppSpacing.xs,
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (onDelete != null)
+                        MinTouchTarget(
+                          key: Key(
+                            'subscription_card_delete_button_${subscription.id}',
+                          ),
+                          child: IconButton(
+                            icon: Icon(
+                              Icons.delete_outline_rounded,
+                              size: 20,
+                              color: isDark
+                                  ? AppColors.darkError
+                                  : AppColors.lightError,
+                            ),
+                            tooltip: l10n?.delete ?? 'حذف',
+                            onPressed: onDelete,
                           ),
                         ),
-                      ),
-                    ),
+                      if (onMarkPaid != null) ...[
+                        const SizedBox(width: AppSpacing.xs),
+                        MinTouchTarget(
+                          key: const Key('subscription_card_pay_button'),
+                          child: TextButton.icon(
+                            onPressed: onMarkPaid,
+                            icon: const Icon(
+                              Icons.check_circle_outline_rounded,
+                              size: 18,
+                            ),
+                            label: Text(l10n?.markAsPaid ?? 'تسديد'),
+                            style: TextButton.styleFrom(
+                              visualDensity: VisualDensity.compact,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSpacing.sm,
+                                vertical: AppSpacing.xs,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ],
               ),
             ],

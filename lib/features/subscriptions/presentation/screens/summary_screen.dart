@@ -3,6 +3,7 @@ import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/theme/tokens/app_colors.dart';
 import '../../../../core/theme/tokens/app_radii.dart';
 import '../../../../core/theme/tokens/app_spacing.dart';
+import '../../../../core/utils/app_haptics.dart';
 import '../formatters/currency_formatter.dart';
 import '../state/summary_controller.dart';
 import '../state/view_state.dart';
@@ -127,6 +128,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
               selected: isSelected,
               onSelected: (selected) {
                 if (selected) {
+                  AppHaptics.selectionClick();
                   widget.controller.selectCurrency(currency);
                 }
               },
@@ -144,57 +146,75 @@ class _SummaryScreenState extends State<SummaryScreen> {
     final summary = data.currentMonthlySummary!;
     final projection = data.upcomingProjection;
 
-    return Column(
-      children: [
-        Row(
+    final card1 = MetricCard(
+      title: l10n?.monthlyEquivalent ?? 'المكافئ الشهري',
+      value: CurrencyFormatter.format(summary.totalMonthlyEquivalent),
+      icon: Icons.calendar_view_month,
+      iconColor: AppColors.indigo600,
+    );
+
+    final card2 = MetricCard(
+      title: l10n?.annualEquivalent ?? 'المكافئ السنوي',
+      value: CurrencyFormatter.format(summary.totalAnnualEquivalent),
+      icon: Icons.event_repeat,
+      iconColor: AppColors.emerald600,
+    );
+
+    final card3 = MetricCard(
+      title: l10n?.activeSubscriptionsCount ?? 'الاشتراكات النشطة',
+      value: '${summary.activeSubscriptionsCount}',
+      icon: Icons.subscriptions_outlined,
+      iconColor: AppColors.amber600,
+    );
+
+    final card4 = MetricCard(
+      title: l10n?.upcomingRenewals ?? 'المتبقي هذا الشهر',
+      value: projection != null
+          ? CurrencyFormatter.format(projection.upcomingAmount)
+          : '-',
+      icon: Icons.pending_actions,
+      iconColor: AppColors.rose600,
+      subtitle: projection != null
+          ? '${projection.occurrences.length} تجديدات'
+          : null,
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth >= 600) {
+          return Row(
+            children: [
+              Expanded(child: card1),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(child: card2),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(child: card3),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(child: card4),
+            ],
+          );
+        }
+
+        return Column(
           children: [
-            Expanded(
-              child: MetricCard(
-                title: l10n?.monthlyEquivalent ?? 'المكافئ الشهري',
-                value: CurrencyFormatter.format(summary.totalMonthlyEquivalent),
-                icon: Icons.calendar_view_month,
-                iconColor: AppColors.indigo600,
-              ),
+            Row(
+              children: [
+                Expanded(child: card1),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(child: card2),
+              ],
             ),
-            const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              child: MetricCard(
-                title: l10n?.annualEquivalent ?? 'المكافئ السنوي',
-                value: CurrencyFormatter.format(summary.totalAnnualEquivalent),
-                icon: Icons.event_repeat,
-                iconColor: AppColors.emerald600,
-              ),
+            const SizedBox(height: AppSpacing.sm),
+            Row(
+              children: [
+                Expanded(child: card3),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(child: card4),
+              ],
             ),
           ],
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        Row(
-          children: [
-            Expanded(
-              child: MetricCard(
-                title: l10n?.activeSubscriptionsCount ?? 'الاشتراكات النشطة',
-                value: '${summary.activeSubscriptionsCount}',
-                icon: Icons.subscriptions_outlined,
-                iconColor: AppColors.amber600,
-              ),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              child: MetricCard(
-                title: l10n?.upcomingRenewals ?? 'المتبقي هذا الشهر',
-                value: projection != null
-                    ? CurrencyFormatter.format(projection.upcomingAmount)
-                    : '-',
-                icon: Icons.pending_actions,
-                iconColor: AppColors.rose600,
-                subtitle: projection != null
-                    ? '${projection.occurrences.length} تجديدات'
-                    : null,
-              ),
-            ),
-          ],
-        ),
-      ],
+        );
+      },
     );
   }
 

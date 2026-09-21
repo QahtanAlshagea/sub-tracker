@@ -4,6 +4,7 @@ import '../../../../core/theme/accessibility/accessibility_widgets.dart';
 import '../../../../core/theme/tokens/app_colors.dart';
 import '../../../../core/theme/tokens/app_radii.dart';
 import '../../../../core/theme/tokens/app_spacing.dart';
+import '../../../../core/utils/app_haptics.dart';
 import '../../domain/value_objects/billing_cycle.dart';
 import '../formatters/date_formatter.dart';
 import '../state/add_edit_subscription_controller.dart';
@@ -216,288 +217,320 @@ class _AddEditSubscriptionScreenState extends State<AddEditSubscriptionScreen> {
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppSpacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (formState.generalError != null) ...[
-            Container(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.errorContainer,
-                borderRadius: BorderRadius.circular(AppRadii.md),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (formState.generalError != null) ...[
+                Container(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.errorContainer,
+                    borderRadius: BorderRadius.circular(AppRadii.md),
+                  ),
+                  child: Text(
+                    formState.generalError!,
+                    style: TextStyle(
+                      color: theme.colorScheme.onErrorContainer,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+              ],
+
+              // Name field
+              TextFormField(
+                key: const Key('add_edit_name_field'),
+                controller: _nameController,
+                decoration: InputDecoration(
+                  labelText: l10n?.subscriptionName ?? 'اسم الاشتراك',
+                  hintText: 'مثال: Netflix, Spotify',
+                  prefixIcon: const Icon(Icons.label_outline),
+                  errorText: formState.nameError,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(AppRadii.md),
+                  ),
+                ),
+                textInputAction: TextInputAction.next,
+                onChanged: widget.controller.updateName,
               ),
-              child: Text(
-                formState.generalError!,
-                style: TextStyle(
-                  color: theme.colorScheme.onErrorContainer,
+              const SizedBox(height: AppSpacing.md),
+
+              // Price and Currency row
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: TextFormField(
+                      key: const Key('add_edit_price_field'),
+                      controller: _priceController,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      decoration: InputDecoration(
+                        labelText: l10n?.subscriptionPrice ?? 'المبلغ / القيمة',
+                        hintText: '0.00',
+                        prefixIcon: const Icon(Icons.attach_money),
+                        errorText: formState.priceError,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadii.md),
+                        ),
+                      ),
+                      textInputAction: TextInputAction.next,
+                      onChanged: widget.controller.updatePriceText,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    flex: 2,
+                    child: DropdownButtonFormField<String>(
+                      key: const Key('add_edit_currency_dropdown'),
+                      isExpanded: true,
+                      initialValue: formState.currency,
+                      decoration: InputDecoration(
+                        labelText: l10n?.currency ?? 'العملة',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadii.md),
+                        ),
+                      ),
+                      items: const [
+                        DropdownMenuItem(value: 'USD', child: Text('USD (\$)')),
+                        DropdownMenuItem(value: 'EUR', child: Text('EUR (€)')),
+                        DropdownMenuItem(value: 'GBP', child: Text('GBP (£)')),
+                        DropdownMenuItem(
+                          value: 'SAR',
+                          child: Text('SAR (ر.س)'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'AED',
+                          child: Text('AED (د.إ)'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'YER',
+                          child: Text('YER (ر.ي)'),
+                        ),
+                        DropdownMenuItem(value: 'JPY', child: Text('JPY (¥)')),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) widget.controller.updateCurrency(val);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.md),
+
+              // Billing Cycle Segmented Control
+              Text(
+                l10n?.billingCycle ?? 'دورية الفوترة',
+                style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),
-            ),
-            const SizedBox(height: AppSpacing.md),
-          ],
-
-          // Name field
-          TextFormField(
-            key: const Key('add_edit_name_field'),
-            controller: _nameController,
-            decoration: InputDecoration(
-              labelText: l10n?.subscriptionName ?? 'اسم الاشتراك',
-              hintText: 'مثال: Netflix, Spotify',
-              prefixIcon: const Icon(Icons.label_outline),
-              errorText: formState.nameError,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadii.md),
-              ),
-            ),
-            textInputAction: TextInputAction.next,
-            onChanged: widget.controller.updateName,
-          ),
-          const SizedBox(height: AppSpacing.md),
-
-          // Price and Currency row
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                flex: 3,
-                child: TextFormField(
-                  key: const Key('add_edit_price_field'),
-                  controller: _priceController,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  decoration: InputDecoration(
-                    labelText: l10n?.subscriptionPrice ?? 'المبلغ / القيمة',
-                    hintText: '0.00',
-                    prefixIcon: const Icon(Icons.attach_money),
-                    errorText: formState.priceError,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadii.md),
+              const SizedBox(height: AppSpacing.xs),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: SegmentedButton<CycleType>(
+                  key: const Key('add_edit_cycle_segmented_button'),
+                  showSelectedIcon: false,
+                  segments: [
+                    ButtonSegment(
+                      value: CycleType.monthly,
+                      label: Text(l10n?.monthly ?? 'شهرياً'),
                     ),
-                  ),
-                  textInputAction: TextInputAction.next,
-                  onChanged: widget.controller.updatePriceText,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                flex: 2,
-                child: DropdownButtonFormField<String>(
-                  key: const Key('add_edit_currency_dropdown'),
-                  initialValue: formState.currency,
-                  decoration: InputDecoration(
-                    labelText: l10n?.currency ?? 'العملة',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadii.md),
+                    ButtonSegment(
+                      value: CycleType.yearly,
+                      label: Text(l10n?.yearly ?? 'سنوياً'),
                     ),
-                  ),
-                  items: const [
-                    DropdownMenuItem(value: 'USD', child: Text('USD (\$)')),
-                    DropdownMenuItem(value: 'EUR', child: Text('EUR (€)')),
-                    DropdownMenuItem(value: 'GBP', child: Text('GBP (£)')),
-                    DropdownMenuItem(value: 'SAR', child: Text('SAR (ر.س)')),
-                    DropdownMenuItem(value: 'AED', child: Text('AED (د.إ)')),
-                    DropdownMenuItem(value: 'YER', child: Text('YER (ر.ي)')),
-                    DropdownMenuItem(value: 'JPY', child: Text('JPY (¥)')),
+                    ButtonSegment(
+                      value: CycleType.weekly,
+                      label: Text(l10n?.weekly ?? 'أسبوعياً'),
+                    ),
+                    ButtonSegment(
+                      value: CycleType.custom,
+                      label: Text(l10n?.customCycle ?? 'مخصص'),
+                    ),
                   ],
-                  onChanged: (val) {
-                    if (val != null) widget.controller.updateCurrency(val);
-                  },
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.md),
-
-          // Billing Cycle Segmented Control
-          Text(
-            l10n?.billingCycle ?? 'دورية الفوترة',
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          SegmentedButton<CycleType>(
-            key: const Key('add_edit_cycle_segmented_button'),
-            segments: [
-              ButtonSegment(
-                value: CycleType.monthly,
-                label: Text(l10n?.monthly ?? 'شهرياً'),
-              ),
-              ButtonSegment(
-                value: CycleType.yearly,
-                label: Text(l10n?.yearly ?? 'سنوياً'),
-              ),
-              ButtonSegment(
-                value: CycleType.weekly,
-                label: Text(l10n?.weekly ?? 'أسبوعياً'),
-              ),
-              ButtonSegment(
-                value: CycleType.custom,
-                label: Text(l10n?.customCycle ?? 'مخصص'),
-              ),
-            ],
-            selected: {formState.cycle.type},
-            onSelectionChanged: (selected) {
-              final type = selected.first;
-              switch (type) {
-                case CycleType.monthly:
-                  widget.controller.updateCycle(const BillingCycle.monthly());
-                  break;
-                case CycleType.yearly:
-                  widget.controller.updateCycle(const BillingCycle.yearly());
-                  break;
-                case CycleType.weekly:
-                  widget.controller.updateCycle(const BillingCycle.weekly());
-                  break;
-                case CycleType.custom:
-                  final days = int.tryParse(_customDaysController.text) ?? 30;
-                  widget.controller.updateCycle(BillingCycle.custom(days));
-                  break;
-              }
-            },
-          ),
-
-          if (formState.cycle.isCustom) ...[
-            const SizedBox(height: AppSpacing.sm),
-            TextFormField(
-              key: const Key('add_edit_custom_days_field'),
-              controller: _customDaysController,
-              keyboardType: TextInputType.number,
-              decoration: InputDecoration(
-                labelText:
-                    l10n?.customDaysInterval ?? 'عدد الأيام للدورية المخصصة',
-                hintText: '30',
-                prefixIcon: const Icon(Icons.calendar_today),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadii.md),
-                ),
-              ),
-              onChanged: (val) {
-                final days = int.tryParse(val);
-                if (days != null && days > 0) {
-                  widget.controller.updateCycle(BillingCycle.custom(days));
-                }
-              },
-            ),
-          ],
-          const SizedBox(height: AppSpacing.md),
-
-          // Date Pickers Row
-          Row(
-            children: [
-              Expanded(
-                child: _buildDatePickerCard(
-                  context: context,
-                  key: const Key('add_edit_start_date_picker'),
-                  label: l10n?.startDate ?? 'تاريخ البدء',
-                  formattedDate: DateFormatter.formatDate(formState.startDate),
-                  onTap: () async {
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: formState.startDate,
-                      firstDate: DateTime(2000),
-                      lastDate: DateTime(2100),
-                    );
-                    if (picked != null) {
-                      widget.controller.updateStartDate(picked);
+                  selected: {formState.cycle.type},
+                  onSelectionChanged: (selected) {
+                    final type = selected.first;
+                    switch (type) {
+                      case CycleType.monthly:
+                        widget.controller.updateCycle(
+                          const BillingCycle.monthly(),
+                        );
+                        break;
+                      case CycleType.yearly:
+                        widget.controller.updateCycle(
+                          const BillingCycle.yearly(),
+                        );
+                        break;
+                      case CycleType.weekly:
+                        widget.controller.updateCycle(
+                          const BillingCycle.weekly(),
+                        );
+                        break;
+                      case CycleType.custom:
+                        final days =
+                            int.tryParse(_customDaysController.text) ?? 30;
+                        widget.controller.updateCycle(
+                          BillingCycle.custom(days),
+                        );
+                        break;
                     }
                   },
                 ),
               ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: _buildDatePickerCard(
-                  context: context,
-                  key: const Key('add_edit_next_due_date_picker'),
-                  label: l10n?.nextDueDate ?? 'تاريخ الاستحقاق',
-                  formattedDate: DateFormatter.formatDate(
-                    formState.nextDueDate,
+
+              if (formState.cycle.isCustom) ...[
+                const SizedBox(height: AppSpacing.sm),
+                TextFormField(
+                  key: const Key('add_edit_custom_days_field'),
+                  controller: _customDaysController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText:
+                        l10n?.customDaysInterval ??
+                        'عدد الأيام للدورية المخصصة',
+                    hintText: '30',
+                    prefixIcon: const Icon(Icons.calendar_today),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppRadii.md),
+                    ),
                   ),
-                  onTap: () async {
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: formState.nextDueDate,
-                      firstDate: DateTime(2000),
-                      lastDate: DateTime(2100),
-                    );
-                    if (picked != null) {
-                      widget.controller.updateNextDueDate(picked);
+                  onChanged: (val) {
+                    final days = int.tryParse(val);
+                    if (days != null && days > 0) {
+                      widget.controller.updateCycle(BillingCycle.custom(days));
                     }
                   },
                 ),
+              ],
+              const SizedBox(height: AppSpacing.md),
+
+              // Date Pickers Row
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildDatePickerCard(
+                      context: context,
+                      key: const Key('add_edit_start_date_picker'),
+                      label: l10n?.startDate ?? 'تاريخ البدء',
+                      formattedDate: DateFormatter.formatDate(
+                        formState.startDate,
+                      ),
+                      onTap: () async {
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: formState.startDate,
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime(2100),
+                        );
+                        if (picked != null) {
+                          widget.controller.updateStartDate(picked);
+                        }
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: _buildDatePickerCard(
+                      context: context,
+                      key: const Key('add_edit_next_due_date_picker'),
+                      label: l10n?.nextDueDate ?? 'تاريخ الاستحقاق',
+                      formattedDate: DateFormatter.formatDate(
+                        formState.nextDueDate,
+                      ),
+                      onTap: () async {
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: formState.nextDueDate,
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime(2100),
+                        );
+                        if (picked != null) {
+                          widget.controller.updateNextDueDate(picked);
+                        }
+                      },
+                    ),
+                  ),
+                ],
               ),
+              const SizedBox(height: AppSpacing.md),
+
+              // Category Dropdown
+              Text(
+                l10n?.category ?? 'الفئة',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              DropdownButtonFormField<String>(
+                key: const Key('add_edit_category_dropdown'),
+                isExpanded: true,
+                initialValue:
+                    formState.availableCategories.any(
+                      (c) => c.id == formState.categoryId,
+                    )
+                    ? formState.categoryId
+                    : (formState.availableCategories.isNotEmpty
+                          ? formState.availableCategories.first.id
+                          : null),
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.category_outlined),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(AppRadii.md),
+                  ),
+                ),
+                items: formState.availableCategories.map((cat) {
+                  return DropdownMenuItem(value: cat.id, child: Text(cat.name));
+                }).toList(),
+                onChanged: (val) {
+                  if (val != null) widget.controller.updateCategory(val);
+                },
+              ),
+              const SizedBox(height: AppSpacing.md),
+
+              // Payment Method (Optional)
+              TextFormField(
+                key: const Key('add_edit_payment_method_field'),
+                controller: _paymentMethodController,
+                decoration: InputDecoration(
+                  labelText: l10n?.paymentMethod ?? 'وسيلة الدفع (اختياري)',
+                  hintText: 'مثال: بطاقة مدى / Visa',
+                  prefixIcon: const Icon(Icons.credit_card_outlined),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(AppRadii.md),
+                  ),
+                ),
+                textInputAction: TextInputAction.next,
+                onChanged: widget.controller.updatePaymentMethod,
+              ),
+              const SizedBox(height: AppSpacing.md),
+
+              // Notes (Optional)
+              TextFormField(
+                key: const Key('add_edit_notes_field'),
+                controller: _notesController,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  labelText: l10n?.notes ?? 'ملاحظات (اختياري)',
+                  prefixIcon: const Icon(Icons.note_outlined),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(AppRadii.md),
+                  ),
+                ),
+                onChanged: widget.controller.updateNotes,
+              ),
+              const SizedBox(height: AppSpacing.xl),
             ],
           ),
-          const SizedBox(height: AppSpacing.md),
-
-          // Category Dropdown
-          Text(
-            l10n?.category ?? 'الفئة',
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          DropdownButtonFormField<String>(
-            key: const Key('add_edit_category_dropdown'),
-            initialValue:
-                formState.availableCategories.any(
-                  (c) => c.id == formState.categoryId,
-                )
-                ? formState.categoryId
-                : (formState.availableCategories.isNotEmpty
-                      ? formState.availableCategories.first.id
-                      : null),
-            decoration: InputDecoration(
-              prefixIcon: const Icon(Icons.category_outlined),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadii.md),
-              ),
-            ),
-            items: formState.availableCategories.map((cat) {
-              return DropdownMenuItem(value: cat.id, child: Text(cat.name));
-            }).toList(),
-            onChanged: (val) {
-              if (val != null) widget.controller.updateCategory(val);
-            },
-          ),
-          const SizedBox(height: AppSpacing.md),
-
-          // Payment Method (Optional)
-          TextFormField(
-            key: const Key('add_edit_payment_method_field'),
-            controller: _paymentMethodController,
-            decoration: InputDecoration(
-              labelText: l10n?.paymentMethod ?? 'وسيلة الدفع (اختياري)',
-              hintText: 'مثال: بطاقة مدى / Visa',
-              prefixIcon: const Icon(Icons.credit_card_outlined),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadii.md),
-              ),
-            ),
-            textInputAction: TextInputAction.next,
-            onChanged: widget.controller.updatePaymentMethod,
-          ),
-          const SizedBox(height: AppSpacing.md),
-
-          // Notes (Optional)
-          TextFormField(
-            key: const Key('add_edit_notes_field'),
-            controller: _notesController,
-            maxLines: 3,
-            decoration: InputDecoration(
-              labelText: l10n?.notes ?? 'ملاحظات (اختياري)',
-              prefixIcon: const Icon(Icons.note_outlined),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadii.md),
-              ),
-            ),
-            onChanged: widget.controller.updateNotes,
-          ),
-          const SizedBox(height: AppSpacing.xl),
-        ],
+        ),
       ),
     );
   }
@@ -570,24 +603,34 @@ class _AddEditSubscriptionScreenState extends State<AddEditSubscriptionScreen> {
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
-        child: MinTouchTarget(
-          child: FilledButton(
-            key: const Key('add_edit_save_button'),
-            onPressed: formState.isSubmitting
-                ? null
-                : () async {
-                    final success = await widget.controller.saveSubscription();
-                    if (success && context.mounted) {
-                      Navigator.of(context).pop(true);
-                    }
-                  },
-            child: formState.isSubmitting
-                ? const SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(strokeWidth: 2.5),
-                  )
-                : Text(l10n?.save ?? 'حفظ'),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: MinTouchTarget(
+              child: SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  key: const Key('add_edit_save_button'),
+                  onPressed: formState.isSubmitting
+                      ? null
+                      : () async {
+                          AppHaptics.mediumImpact();
+                          final success = await widget.controller
+                              .saveSubscription();
+                          if (success && context.mounted) {
+                            Navigator.of(context).pop(true);
+                          }
+                        },
+                  child: formState.isSubmitting
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2.5),
+                        )
+                      : Text(l10n?.save ?? 'حفظ'),
+                ),
+              ),
+            ),
           ),
         ),
       ),
