@@ -90,4 +90,8 @@ test_img.html
 scratch/
 screenshots/
 
+# Official Release Distribution (Explicitly tracked for direct download)
+!releases/
+!releases/**
+
 
