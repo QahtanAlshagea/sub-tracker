@@ -292,10 +292,7 @@ void main() {
       'catches SqliteException and maps to DatabaseFailure with zero exception leak',
       () async {
         final failingDataSource = FailingSubscriptionLocalDataSource(
-          SqliteException(
-            extendedResultCode: 1,
-            message: 'SQLite database locked',
-          ),
+          SqliteException(1, 'SQLite database locked'),
         );
         final failingRepo = SubscriptionRepositoryImpl(failingDataSource);
 
@@ -325,7 +322,7 @@ void main() {
       'watchSubscriptions emits Result.failure when stream encounters error',
       () async {
         final failingDataSource = FailingSubscriptionLocalDataSource(
-          SqliteException(extendedResultCode: 1, message: 'stream broken'),
+          SqliteException(1, 'stream broken'),
         );
         final failingRepo = SubscriptionRepositoryImpl(failingDataSource);
 

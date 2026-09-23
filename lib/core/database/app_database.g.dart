@@ -553,6 +553,18 @@ class $SubscriptionsTable extends Subscriptions
       'REFERENCES categories (id) ON DELETE RESTRICT',
     ),
   );
+  static const VerificationMeta _obligationTypeMeta = const VerificationMeta(
+    'obligationType',
+  );
+  @override
+  late final GeneratedColumn<String> obligationType = GeneratedColumn<String>(
+    'obligation_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('subscription'),
+  );
   static const VerificationMeta _statusMeta = const VerificationMeta('status');
   @override
   late final GeneratedColumn<String> status = GeneratedColumn<String>(
@@ -718,6 +730,7 @@ class $SubscriptionsTable extends Subscriptions
     nextDueDate,
     originalAnchorDay,
     categoryId,
+    obligationType,
     status,
     isTrial,
     notes,
@@ -833,6 +846,15 @@ class $SubscriptionsTable extends Subscriptions
       );
     } else if (isInserting) {
       context.missing(_categoryIdMeta);
+    }
+    if (data.containsKey('obligation_type')) {
+      context.handle(
+        _obligationTypeMeta,
+        obligationType.isAcceptableOrUnknown(
+          data['obligation_type']!,
+          _obligationTypeMeta,
+        ),
+      );
     }
     if (data.containsKey('status')) {
       context.handle(
@@ -980,6 +1002,10 @@ class $SubscriptionsTable extends Subscriptions
         DriftSqlType.string,
         data['${effectivePrefix}category_id'],
       )!,
+      obligationType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}obligation_type'],
+      )!,
       status: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}status'],
@@ -1072,7 +1098,10 @@ class Subscription extends DataClass implements Insertable<Subscription> {
   /// Foreign key referencing Categories(id) with RESTRICT on delete.
   final String categoryId;
 
-  /// Lifecycle status ('active', 'archived', 'in_trash').
+  /// Nature/classification of the obligation ('subscription', 'bill', 'rent', 'other').
+  final String obligationType;
+
+  /// Lifecycle status ('active', 'archived', 'in_trash', 'overdue').
   final String status;
 
   /// Flag indicating if the subscription is currently a free trial.
@@ -1121,6 +1150,7 @@ class Subscription extends DataClass implements Insertable<Subscription> {
     required this.nextDueDate,
     required this.originalAnchorDay,
     required this.categoryId,
+    required this.obligationType,
     required this.status,
     required this.isTrial,
     this.notes,
@@ -1150,6 +1180,7 @@ class Subscription extends DataClass implements Insertable<Subscription> {
     map['next_due_date'] = Variable<DateTime>(nextDueDate);
     map['original_anchor_day'] = Variable<int>(originalAnchorDay);
     map['category_id'] = Variable<String>(categoryId);
+    map['obligation_type'] = Variable<String>(obligationType);
     map['status'] = Variable<String>(status);
     map['is_trial'] = Variable<bool>(isTrial);
     if (!nullToAbsent || notes != null) {
@@ -1190,6 +1221,7 @@ class Subscription extends DataClass implements Insertable<Subscription> {
       nextDueDate: Value(nextDueDate),
       originalAnchorDay: Value(originalAnchorDay),
       categoryId: Value(categoryId),
+      obligationType: Value(obligationType),
       status: Value(status),
       isTrial: Value(isTrial),
       notes: notes == null && nullToAbsent
@@ -1232,6 +1264,7 @@ class Subscription extends DataClass implements Insertable<Subscription> {
       nextDueDate: serializer.fromJson<DateTime>(json['nextDueDate']),
       originalAnchorDay: serializer.fromJson<int>(json['originalAnchorDay']),
       categoryId: serializer.fromJson<String>(json['categoryId']),
+      obligationType: serializer.fromJson<String>(json['obligationType']),
       status: serializer.fromJson<String>(json['status']),
       isTrial: serializer.fromJson<bool>(json['isTrial']),
       notes: serializer.fromJson<String?>(json['notes']),
@@ -1263,6 +1296,7 @@ class Subscription extends DataClass implements Insertable<Subscription> {
       'nextDueDate': serializer.toJson<DateTime>(nextDueDate),
       'originalAnchorDay': serializer.toJson<int>(originalAnchorDay),
       'categoryId': serializer.toJson<String>(categoryId),
+      'obligationType': serializer.toJson<String>(obligationType),
       'status': serializer.toJson<String>(status),
       'isTrial': serializer.toJson<bool>(isTrial),
       'notes': serializer.toJson<String?>(notes),
@@ -1290,6 +1324,7 @@ class Subscription extends DataClass implements Insertable<Subscription> {
     DateTime? nextDueDate,
     int? originalAnchorDay,
     String? categoryId,
+    String? obligationType,
     String? status,
     bool? isTrial,
     Value<String?> notes = const Value.absent(),
@@ -1316,6 +1351,7 @@ class Subscription extends DataClass implements Insertable<Subscription> {
     nextDueDate: nextDueDate ?? this.nextDueDate,
     originalAnchorDay: originalAnchorDay ?? this.originalAnchorDay,
     categoryId: categoryId ?? this.categoryId,
+    obligationType: obligationType ?? this.obligationType,
     status: status ?? this.status,
     isTrial: isTrial ?? this.isTrial,
     notes: notes.present ? notes.value : this.notes,
@@ -1356,6 +1392,9 @@ class Subscription extends DataClass implements Insertable<Subscription> {
       categoryId: data.categoryId.present
           ? data.categoryId.value
           : this.categoryId,
+      obligationType: data.obligationType.present
+          ? data.obligationType.value
+          : this.obligationType,
       status: data.status.present ? data.status.value : this.status,
       isTrial: data.isTrial.present ? data.isTrial.value : this.isTrial,
       notes: data.notes.present ? data.notes.value : this.notes,
@@ -1399,6 +1438,7 @@ class Subscription extends DataClass implements Insertable<Subscription> {
           ..write('nextDueDate: $nextDueDate, ')
           ..write('originalAnchorDay: $originalAnchorDay, ')
           ..write('categoryId: $categoryId, ')
+          ..write('obligationType: $obligationType, ')
           ..write('status: $status, ')
           ..write('isTrial: $isTrial, ')
           ..write('notes: $notes, ')
@@ -1428,6 +1468,7 @@ class Subscription extends DataClass implements Insertable<Subscription> {
     nextDueDate,
     originalAnchorDay,
     categoryId,
+    obligationType,
     status,
     isTrial,
     notes,
@@ -1456,6 +1497,7 @@ class Subscription extends DataClass implements Insertable<Subscription> {
           other.nextDueDate == this.nextDueDate &&
           other.originalAnchorDay == this.originalAnchorDay &&
           other.categoryId == this.categoryId &&
+          other.obligationType == this.obligationType &&
           other.status == this.status &&
           other.isTrial == this.isTrial &&
           other.notes == this.notes &&
@@ -1482,6 +1524,7 @@ class SubscriptionsCompanion extends UpdateCompanion<Subscription> {
   final Value<DateTime> nextDueDate;
   final Value<int> originalAnchorDay;
   final Value<String> categoryId;
+  final Value<String> obligationType;
   final Value<String> status;
   final Value<bool> isTrial;
   final Value<String?> notes;
@@ -1507,6 +1550,7 @@ class SubscriptionsCompanion extends UpdateCompanion<Subscription> {
     this.nextDueDate = const Value.absent(),
     this.originalAnchorDay = const Value.absent(),
     this.categoryId = const Value.absent(),
+    this.obligationType = const Value.absent(),
     this.status = const Value.absent(),
     this.isTrial = const Value.absent(),
     this.notes = const Value.absent(),
@@ -1533,6 +1577,7 @@ class SubscriptionsCompanion extends UpdateCompanion<Subscription> {
     required DateTime nextDueDate,
     required int originalAnchorDay,
     required String categoryId,
+    this.obligationType = const Value.absent(),
     this.status = const Value.absent(),
     this.isTrial = const Value.absent(),
     this.notes = const Value.absent(),
@@ -1569,6 +1614,7 @@ class SubscriptionsCompanion extends UpdateCompanion<Subscription> {
     Expression<DateTime>? nextDueDate,
     Expression<int>? originalAnchorDay,
     Expression<String>? categoryId,
+    Expression<String>? obligationType,
     Expression<String>? status,
     Expression<bool>? isTrial,
     Expression<String>? notes,
@@ -1595,6 +1641,7 @@ class SubscriptionsCompanion extends UpdateCompanion<Subscription> {
       if (nextDueDate != null) 'next_due_date': nextDueDate,
       if (originalAnchorDay != null) 'original_anchor_day': originalAnchorDay,
       if (categoryId != null) 'category_id': categoryId,
+      if (obligationType != null) 'obligation_type': obligationType,
       if (status != null) 'status': status,
       if (isTrial != null) 'is_trial': isTrial,
       if (notes != null) 'notes': notes,
@@ -1624,6 +1671,7 @@ class SubscriptionsCompanion extends UpdateCompanion<Subscription> {
     Value<DateTime>? nextDueDate,
     Value<int>? originalAnchorDay,
     Value<String>? categoryId,
+    Value<String>? obligationType,
     Value<String>? status,
     Value<bool>? isTrial,
     Value<String?>? notes,
@@ -1650,6 +1698,7 @@ class SubscriptionsCompanion extends UpdateCompanion<Subscription> {
       nextDueDate: nextDueDate ?? this.nextDueDate,
       originalAnchorDay: originalAnchorDay ?? this.originalAnchorDay,
       categoryId: categoryId ?? this.categoryId,
+      obligationType: obligationType ?? this.obligationType,
       status: status ?? this.status,
       isTrial: isTrial ?? this.isTrial,
       notes: notes ?? this.notes,
@@ -1699,6 +1748,9 @@ class SubscriptionsCompanion extends UpdateCompanion<Subscription> {
     }
     if (categoryId.present) {
       map['category_id'] = Variable<String>(categoryId.value);
+    }
+    if (obligationType.present) {
+      map['obligation_type'] = Variable<String>(obligationType.value);
     }
     if (status.present) {
       map['status'] = Variable<String>(status.value);
@@ -1758,6 +1810,7 @@ class SubscriptionsCompanion extends UpdateCompanion<Subscription> {
           ..write('nextDueDate: $nextDueDate, ')
           ..write('originalAnchorDay: $originalAnchorDay, ')
           ..write('categoryId: $categoryId, ')
+          ..write('obligationType: $obligationType, ')
           ..write('status: $status, ')
           ..write('isTrial: $isTrial, ')
           ..write('notes: $notes, ')
@@ -2343,6 +2396,32 @@ class $SettingsTable extends Settings with TableInfo<$SettingsTable, Setting> {
     requiredDuringInsert: false,
     defaultValue: const Constant(2),
   );
+  static const VerificationMeta _pinHashMeta = const VerificationMeta(
+    'pinHash',
+  );
+  @override
+  late final GeneratedColumn<String> pinHash = GeneratedColumn<String>(
+    'pin_hash',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _isPinEnabledMeta = const VerificationMeta(
+    'isPinEnabled',
+  );
+  @override
+  late final GeneratedColumn<bool> isPinEnabled = GeneratedColumn<bool>(
+    'is_pin_enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_pin_enabled" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   static const VerificationMeta _updatedAtMeta = const VerificationMeta(
     'updatedAt',
   );
@@ -2365,6 +2444,8 @@ class $SettingsTable extends Settings with TableInfo<$SettingsTable, Setting> {
     defaultSortOrder,
     lastBackupAt,
     schemaVersion,
+    pinHash,
+    isPinEnabled,
     updatedAt,
   ];
   @override
@@ -2451,6 +2532,21 @@ class $SettingsTable extends Settings with TableInfo<$SettingsTable, Setting> {
         ),
       );
     }
+    if (data.containsKey('pin_hash')) {
+      context.handle(
+        _pinHashMeta,
+        pinHash.isAcceptableOrUnknown(data['pin_hash']!, _pinHashMeta),
+      );
+    }
+    if (data.containsKey('is_pin_enabled')) {
+      context.handle(
+        _isPinEnabledMeta,
+        isPinEnabled.isAcceptableOrUnknown(
+          data['is_pin_enabled']!,
+          _isPinEnabledMeta,
+        ),
+      );
+    }
     if (data.containsKey('updated_at')) {
       context.handle(
         _updatedAtMeta,
@@ -2504,6 +2600,14 @@ class $SettingsTable extends Settings with TableInfo<$SettingsTable, Setting> {
         DriftSqlType.int,
         data['${effectivePrefix}schema_version'],
       )!,
+      pinHash: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}pin_hash'],
+      ),
+      isPinEnabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_pin_enabled'],
+      )!,
       updatedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}updated_at'],
@@ -2545,6 +2649,12 @@ class Setting extends DataClass implements Insertable<Setting> {
   /// Recorded schema version for consistency verification.
   final int schemaVersion;
 
+  /// SHA-256 hash of the 4-digit security PIN (null if disabled).
+  final String? pinHash;
+
+  /// Whether security PIN lock screen is required when launching the app.
+  final bool isPinEnabled;
+
   /// Timestamp of the last settings update in UTC.
   final DateTime updatedAt;
   const Setting({
@@ -2557,6 +2667,8 @@ class Setting extends DataClass implements Insertable<Setting> {
     required this.defaultSortOrder,
     this.lastBackupAt,
     required this.schemaVersion,
+    this.pinHash,
+    required this.isPinEnabled,
     required this.updatedAt,
   });
   @override
@@ -2573,6 +2685,10 @@ class Setting extends DataClass implements Insertable<Setting> {
       map['last_backup_at'] = Variable<DateTime>(lastBackupAt);
     }
     map['schema_version'] = Variable<int>(schemaVersion);
+    if (!nullToAbsent || pinHash != null) {
+      map['pin_hash'] = Variable<String>(pinHash);
+    }
+    map['is_pin_enabled'] = Variable<bool>(isPinEnabled);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
   }
@@ -2590,6 +2706,10 @@ class Setting extends DataClass implements Insertable<Setting> {
           ? const Value.absent()
           : Value(lastBackupAt),
       schemaVersion: Value(schemaVersion),
+      pinHash: pinHash == null && nullToAbsent
+          ? const Value.absent()
+          : Value(pinHash),
+      isPinEnabled: Value(isPinEnabled),
       updatedAt: Value(updatedAt),
     );
   }
@@ -2615,6 +2735,8 @@ class Setting extends DataClass implements Insertable<Setting> {
       defaultSortOrder: serializer.fromJson<String>(json['defaultSortOrder']),
       lastBackupAt: serializer.fromJson<DateTime?>(json['lastBackupAt']),
       schemaVersion: serializer.fromJson<int>(json['schemaVersion']),
+      pinHash: serializer.fromJson<String?>(json['pinHash']),
+      isPinEnabled: serializer.fromJson<bool>(json['isPinEnabled']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
   }
@@ -2631,6 +2753,8 @@ class Setting extends DataClass implements Insertable<Setting> {
       'defaultSortOrder': serializer.toJson<String>(defaultSortOrder),
       'lastBackupAt': serializer.toJson<DateTime?>(lastBackupAt),
       'schemaVersion': serializer.toJson<int>(schemaVersion),
+      'pinHash': serializer.toJson<String?>(pinHash),
+      'isPinEnabled': serializer.toJson<bool>(isPinEnabled),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
   }
@@ -2645,6 +2769,8 @@ class Setting extends DataClass implements Insertable<Setting> {
     String? defaultSortOrder,
     Value<DateTime?> lastBackupAt = const Value.absent(),
     int? schemaVersion,
+    Value<String?> pinHash = const Value.absent(),
+    bool? isPinEnabled,
     DateTime? updatedAt,
   }) => Setting(
     id: id ?? this.id,
@@ -2656,6 +2782,8 @@ class Setting extends DataClass implements Insertable<Setting> {
     defaultSortOrder: defaultSortOrder ?? this.defaultSortOrder,
     lastBackupAt: lastBackupAt.present ? lastBackupAt.value : this.lastBackupAt,
     schemaVersion: schemaVersion ?? this.schemaVersion,
+    pinHash: pinHash.present ? pinHash.value : this.pinHash,
+    isPinEnabled: isPinEnabled ?? this.isPinEnabled,
     updatedAt: updatedAt ?? this.updatedAt,
   );
   Setting copyWithCompanion(SettingsCompanion data) {
@@ -2683,6 +2811,10 @@ class Setting extends DataClass implements Insertable<Setting> {
       schemaVersion: data.schemaVersion.present
           ? data.schemaVersion.value
           : this.schemaVersion,
+      pinHash: data.pinHash.present ? data.pinHash.value : this.pinHash,
+      isPinEnabled: data.isPinEnabled.present
+          ? data.isPinEnabled.value
+          : this.isPinEnabled,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
   }
@@ -2699,6 +2831,8 @@ class Setting extends DataClass implements Insertable<Setting> {
           ..write('defaultSortOrder: $defaultSortOrder, ')
           ..write('lastBackupAt: $lastBackupAt, ')
           ..write('schemaVersion: $schemaVersion, ')
+          ..write('pinHash: $pinHash, ')
+          ..write('isPinEnabled: $isPinEnabled, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
@@ -2715,6 +2849,8 @@ class Setting extends DataClass implements Insertable<Setting> {
     defaultSortOrder,
     lastBackupAt,
     schemaVersion,
+    pinHash,
+    isPinEnabled,
     updatedAt,
   );
   @override
@@ -2730,6 +2866,8 @@ class Setting extends DataClass implements Insertable<Setting> {
           other.defaultSortOrder == this.defaultSortOrder &&
           other.lastBackupAt == this.lastBackupAt &&
           other.schemaVersion == this.schemaVersion &&
+          other.pinHash == this.pinHash &&
+          other.isPinEnabled == this.isPinEnabled &&
           other.updatedAt == this.updatedAt);
 }
 
@@ -2743,6 +2881,8 @@ class SettingsCompanion extends UpdateCompanion<Setting> {
   final Value<String> defaultSortOrder;
   final Value<DateTime?> lastBackupAt;
   final Value<int> schemaVersion;
+  final Value<String?> pinHash;
+  final Value<bool> isPinEnabled;
   final Value<DateTime> updatedAt;
   final Value<int> rowid;
   const SettingsCompanion({
@@ -2755,6 +2895,8 @@ class SettingsCompanion extends UpdateCompanion<Setting> {
     this.defaultSortOrder = const Value.absent(),
     this.lastBackupAt = const Value.absent(),
     this.schemaVersion = const Value.absent(),
+    this.pinHash = const Value.absent(),
+    this.isPinEnabled = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -2768,6 +2910,8 @@ class SettingsCompanion extends UpdateCompanion<Setting> {
     this.defaultSortOrder = const Value.absent(),
     this.lastBackupAt = const Value.absent(),
     this.schemaVersion = const Value.absent(),
+    this.pinHash = const Value.absent(),
+    this.isPinEnabled = const Value.absent(),
     required DateTime updatedAt,
     this.rowid = const Value.absent(),
   }) : updatedAt = Value(updatedAt);
@@ -2781,6 +2925,8 @@ class SettingsCompanion extends UpdateCompanion<Setting> {
     Expression<String>? defaultSortOrder,
     Expression<DateTime>? lastBackupAt,
     Expression<int>? schemaVersion,
+    Expression<String>? pinHash,
+    Expression<bool>? isPinEnabled,
     Expression<DateTime>? updatedAt,
     Expression<int>? rowid,
   }) {
@@ -2797,6 +2943,8 @@ class SettingsCompanion extends UpdateCompanion<Setting> {
       if (defaultSortOrder != null) 'default_sort_order': defaultSortOrder,
       if (lastBackupAt != null) 'last_backup_at': lastBackupAt,
       if (schemaVersion != null) 'schema_version': schemaVersion,
+      if (pinHash != null) 'pin_hash': pinHash,
+      if (isPinEnabled != null) 'is_pin_enabled': isPinEnabled,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -2812,6 +2960,8 @@ class SettingsCompanion extends UpdateCompanion<Setting> {
     Value<String>? defaultSortOrder,
     Value<DateTime?>? lastBackupAt,
     Value<int>? schemaVersion,
+    Value<String?>? pinHash,
+    Value<bool>? isPinEnabled,
     Value<DateTime>? updatedAt,
     Value<int>? rowid,
   }) {
@@ -2826,6 +2976,8 @@ class SettingsCompanion extends UpdateCompanion<Setting> {
       defaultSortOrder: defaultSortOrder ?? this.defaultSortOrder,
       lastBackupAt: lastBackupAt ?? this.lastBackupAt,
       schemaVersion: schemaVersion ?? this.schemaVersion,
+      pinHash: pinHash ?? this.pinHash,
+      isPinEnabled: isPinEnabled ?? this.isPinEnabled,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
     );
@@ -2863,6 +3015,12 @@ class SettingsCompanion extends UpdateCompanion<Setting> {
     if (schemaVersion.present) {
       map['schema_version'] = Variable<int>(schemaVersion.value);
     }
+    if (pinHash.present) {
+      map['pin_hash'] = Variable<String>(pinHash.value);
+    }
+    if (isPinEnabled.present) {
+      map['is_pin_enabled'] = Variable<bool>(isPinEnabled.value);
+    }
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
     }
@@ -2884,6 +3042,8 @@ class SettingsCompanion extends UpdateCompanion<Setting> {
           ..write('defaultSortOrder: $defaultSortOrder, ')
           ..write('lastBackupAt: $lastBackupAt, ')
           ..write('schemaVersion: $schemaVersion, ')
+          ..write('pinHash: $pinHash, ')
+          ..write('isPinEnabled: $isPinEnabled, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -2986,7 +3146,10 @@ final class $$CategoriesTableReferences
   static MultiTypedResultKey<$SubscriptionsTable, List<Subscription>>
   _subscriptionsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
     db.subscriptions,
-    aliasName: 'categories__id__subscriptions__category_id',
+    aliasName: $_aliasNameGenerator(
+      db.categories.id,
+      db.subscriptions.categoryId,
+    ),
   );
 
   $$SubscriptionsTableProcessedTableManager get subscriptionsRefs {
@@ -3294,6 +3457,7 @@ typedef $$SubscriptionsTableCreateCompanionBuilder =
       required DateTime nextDueDate,
       required int originalAnchorDay,
       required String categoryId,
+      Value<String> obligationType,
       Value<String> status,
       Value<bool> isTrial,
       Value<String?> notes,
@@ -3321,6 +3485,7 @@ typedef $$SubscriptionsTableUpdateCompanionBuilder =
       Value<DateTime> nextDueDate,
       Value<int> originalAnchorDay,
       Value<String> categoryId,
+      Value<String> obligationType,
       Value<String> status,
       Value<bool> isTrial,
       Value<String?> notes,
@@ -3346,7 +3511,9 @@ final class $$SubscriptionsTableReferences
   );
 
   static $CategoriesTable _categoryIdTable(_$AppDatabase db) =>
-      db.categories.createAlias('subscriptions__category_id__categories__id');
+      db.categories.createAlias(
+        $_aliasNameGenerator(db.subscriptions.categoryId, db.categories.id),
+      );
 
   $$CategoriesTableProcessedTableManager get categoryId {
     final $_column = $_itemColumn<String>('category_id')!;
@@ -3365,7 +3532,10 @@ final class $$SubscriptionsTableReferences
   static MultiTypedResultKey<$PriceHistoryTable, List<PriceHistoryData>>
   _priceHistoryRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
     db.priceHistory,
-    aliasName: 'subscriptions__id__price_history__subscription_id',
+    aliasName: $_aliasNameGenerator(
+      db.subscriptions.id,
+      db.priceHistory.subscriptionId,
+    ),
   );
 
   $$PriceHistoryTableProcessedTableManager get priceHistoryRefs {
@@ -3432,6 +3602,11 @@ class $$SubscriptionsTableFilterComposer
 
   ColumnFilters<int> get originalAnchorDay => $composableBuilder(
     column: $table.originalAnchorDay,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get obligationType => $composableBuilder(
+    column: $table.obligationType,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3603,6 +3778,11 @@ class $$SubscriptionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get obligationType => $composableBuilder(
+    column: $table.obligationType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get status => $composableBuilder(
     column: $table.status,
     builder: (column) => ColumnOrderings(column),
@@ -3735,6 +3915,11 @@ class $$SubscriptionsTableAnnotationComposer
 
   GeneratedColumn<int> get originalAnchorDay => $composableBuilder(
     column: $table.originalAnchorDay,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get obligationType => $composableBuilder(
+    column: $table.obligationType,
     builder: (column) => column,
   );
 
@@ -3878,6 +4063,7 @@ class $$SubscriptionsTableTableManager
                 Value<DateTime> nextDueDate = const Value.absent(),
                 Value<int> originalAnchorDay = const Value.absent(),
                 Value<String> categoryId = const Value.absent(),
+                Value<String> obligationType = const Value.absent(),
                 Value<String> status = const Value.absent(),
                 Value<bool> isTrial = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
@@ -3903,6 +4089,7 @@ class $$SubscriptionsTableTableManager
                 nextDueDate: nextDueDate,
                 originalAnchorDay: originalAnchorDay,
                 categoryId: categoryId,
+                obligationType: obligationType,
                 status: status,
                 isTrial: isTrial,
                 notes: notes,
@@ -3930,6 +4117,7 @@ class $$SubscriptionsTableTableManager
                 required DateTime nextDueDate,
                 required int originalAnchorDay,
                 required String categoryId,
+                Value<String> obligationType = const Value.absent(),
                 Value<String> status = const Value.absent(),
                 Value<bool> isTrial = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
@@ -3955,6 +4143,7 @@ class $$SubscriptionsTableTableManager
                 nextDueDate: nextDueDate,
                 originalAnchorDay: originalAnchorDay,
                 categoryId: categoryId,
+                obligationType: obligationType,
                 status: status,
                 isTrial: isTrial,
                 notes: notes,
@@ -4090,9 +4279,13 @@ final class $$PriceHistoryTableReferences
         BaseReferences<_$AppDatabase, $PriceHistoryTable, PriceHistoryData> {
   $$PriceHistoryTableReferences(super.$_db, super.$_table, super.$_typedResult);
 
-  static $SubscriptionsTable _subscriptionIdTable(_$AppDatabase db) => db
-      .subscriptions
-      .createAlias('price_history__subscription_id__subscriptions__id');
+  static $SubscriptionsTable _subscriptionIdTable(_$AppDatabase db) =>
+      db.subscriptions.createAlias(
+        $_aliasNameGenerator(
+          db.priceHistory.subscriptionId,
+          db.subscriptions.id,
+        ),
+      );
 
   $$SubscriptionsTableProcessedTableManager get subscriptionId {
     final $_column = $_itemColumn<String>('subscription_id')!;
@@ -4419,6 +4612,8 @@ typedef $$SettingsTableCreateCompanionBuilder =
       Value<String> defaultSortOrder,
       Value<DateTime?> lastBackupAt,
       Value<int> schemaVersion,
+      Value<String?> pinHash,
+      Value<bool> isPinEnabled,
       required DateTime updatedAt,
       Value<int> rowid,
     });
@@ -4433,6 +4628,8 @@ typedef $$SettingsTableUpdateCompanionBuilder =
       Value<String> defaultSortOrder,
       Value<DateTime?> lastBackupAt,
       Value<int> schemaVersion,
+      Value<String?> pinHash,
+      Value<bool> isPinEnabled,
       Value<DateTime> updatedAt,
       Value<int> rowid,
     });
@@ -4488,6 +4685,16 @@ class $$SettingsTableFilterComposer
 
   ColumnFilters<int> get schemaVersion => $composableBuilder(
     column: $table.schemaVersion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get pinHash => $composableBuilder(
+    column: $table.pinHash,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isPinEnabled => $composableBuilder(
+    column: $table.isPinEnabled,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4551,6 +4758,16 @@ class $$SettingsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get pinHash => $composableBuilder(
+    column: $table.pinHash,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isPinEnabled => $composableBuilder(
+    column: $table.isPinEnabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
     column: $table.updatedAt,
     builder: (column) => ColumnOrderings(column),
@@ -4607,6 +4824,14 @@ class $$SettingsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get pinHash =>
+      $composableBuilder(column: $table.pinHash, builder: (column) => column);
+
+  GeneratedColumn<bool> get isPinEnabled => $composableBuilder(
+    column: $table.isPinEnabled,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
 }
@@ -4648,6 +4873,8 @@ class $$SettingsTableTableManager
                 Value<String> defaultSortOrder = const Value.absent(),
                 Value<DateTime?> lastBackupAt = const Value.absent(),
                 Value<int> schemaVersion = const Value.absent(),
+                Value<String?> pinHash = const Value.absent(),
+                Value<bool> isPinEnabled = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => SettingsCompanion(
@@ -4660,6 +4887,8 @@ class $$SettingsTableTableManager
                 defaultSortOrder: defaultSortOrder,
                 lastBackupAt: lastBackupAt,
                 schemaVersion: schemaVersion,
+                pinHash: pinHash,
+                isPinEnabled: isPinEnabled,
                 updatedAt: updatedAt,
                 rowid: rowid,
               ),
@@ -4674,6 +4903,8 @@ class $$SettingsTableTableManager
                 Value<String> defaultSortOrder = const Value.absent(),
                 Value<DateTime?> lastBackupAt = const Value.absent(),
                 Value<int> schemaVersion = const Value.absent(),
+                Value<String?> pinHash = const Value.absent(),
+                Value<bool> isPinEnabled = const Value.absent(),
                 required DateTime updatedAt,
                 Value<int> rowid = const Value.absent(),
               }) => SettingsCompanion.insert(
@@ -4686,6 +4917,8 @@ class $$SettingsTableTableManager
                 defaultSortOrder: defaultSortOrder,
                 lastBackupAt: lastBackupAt,
                 schemaVersion: schemaVersion,
+                pinHash: pinHash,
+                isPinEnabled: isPinEnabled,
                 updatedAt: updatedAt,
                 rowid: rowid,
               ),

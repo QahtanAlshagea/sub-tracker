@@ -105,6 +105,7 @@ void main() {
         nextDueDate: due,
         originalAnchorDay: 1,
         categoryId: 'cat_storage',
+        obligationType: 'subscription',
         status: 'active',
         isTrial: false,
         notes: '200 GB plan',

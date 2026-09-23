@@ -20,6 +20,58 @@ part 'app_database.g.dart';
 const String kSystemUncategorizedId = 'system_uncategorized_id';
 const String kDefaultSettingsId = 'app_settings';
 
+/// Standard default categories seeded on first launch or ensured on startup
+List<CategoriesCompanion> get kDefaultStandardCategories => [
+  CategoriesCompanion.insert(
+    id: 'system_entertainment_id',
+    name: 'ترفيه',
+    colorValue: 0xFF8B5CF6,
+    iconCode: const Value('movie_outlined'),
+    isSystem: const Value(false),
+    createdAt: DateTime.now().toUtc(),
+  ),
+  CategoriesCompanion.insert(
+    id: 'system_utilities_id',
+    name: 'خدمات وفواتير',
+    colorValue: 0xFFF59E0B,
+    iconCode: const Value('receipt_long_outlined'),
+    isSystem: const Value(false),
+    createdAt: DateTime.now().toUtc(),
+  ),
+  CategoriesCompanion.insert(
+    id: 'system_work_id',
+    name: 'عمل وإنتاجية',
+    colorValue: 0xFF3B82F6,
+    iconCode: const Value('work_outline'),
+    isSystem: const Value(false),
+    createdAt: DateTime.now().toUtc(),
+  ),
+  CategoriesCompanion.insert(
+    id: 'system_education_id',
+    name: 'تعليم وتطوير',
+    colorValue: 0xFF10B981,
+    iconCode: const Value('school_outlined'),
+    isSystem: const Value(false),
+    createdAt: DateTime.now().toUtc(),
+  ),
+  CategoriesCompanion.insert(
+    id: 'system_health_id',
+    name: 'صحة ولياقة',
+    colorValue: 0xFFEC4899,
+    iconCode: const Value('fitness_center_outlined'),
+    isSystem: const Value(false),
+    createdAt: DateTime.now().toUtc(),
+  ),
+  CategoriesCompanion.insert(
+    id: 'system_tech_id',
+    name: 'سحاب وتقنية',
+    colorValue: 0xFF06B6D4,
+    iconCode: const Value('cloud_outlined'),
+    isSystem: const Value(false),
+    createdAt: DateTime.now().toUtc(),
+  ),
+];
+
 /// The central Drift database class for Sub Tracker.
 ///
 /// Encapsulates all SQLite tables, migrations, DAOs, and low-level connection configuration.
@@ -33,6 +85,17 @@ class AppDatabase extends _$AppDatabase {
 
   /// In-memory constructor for unit and integration testing.
   AppDatabase.forTesting(super.executor);
+
+  /// Ensures default standard categories are present in database.
+  Future<void> ensureDefaultCategories() async {
+    final existing = await select(categories).get();
+    final existingNames = existing.map((c) => c.name.trim()).toSet();
+    for (final cat in kDefaultStandardCategories) {
+      if (!existingNames.contains(cat.name.value.trim())) {
+        await into(categories).insert(cat, mode: InsertMode.insertOrIgnore);
+      }
+    }
+  }
 
   @override
   int get schemaVersion => 2;
@@ -73,8 +136,9 @@ class AppDatabase extends _$AppDatabase {
     onUpgrade: (Migrator m, int from, int to) async {
       // Schema Migration V1 -> V2 (ARCHITECTURE.md §3.6)
       if (from < 2) {
-        // 1. Add payment_method_desc column to subscriptions
+        // 1. Add payment_method_desc and obligation_type columns to subscriptions
         await m.addColumn(subscriptions, subscriptions.paymentMethodDesc);
+        await m.addColumn(subscriptions, subscriptions.obligationType);
 
         // 2. Create the settings table
         await m.createTable(settings);

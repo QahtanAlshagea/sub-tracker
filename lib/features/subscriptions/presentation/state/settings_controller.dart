@@ -1,14 +1,21 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
+import '../../../../core/usecase/usecase.dart';
 import '../../domain/entities/backup_preview.dart';
 import '../../domain/repositories/backup_repository.dart';
+import '../../domain/usecases/disable_pin_usecase.dart';
 import '../../domain/usecases/export_backup_usecase.dart';
 import '../../domain/usecases/import_backup_usecase.dart';
+import '../../domain/usecases/is_pin_enabled_usecase.dart';
+import '../../domain/usecases/set_pin_usecase.dart';
+import '../../domain/usecases/verify_pin_usecase.dart';
 import 'view_state.dart';
 
 /// State representation for application settings and data management.
 class SettingsState {
   final String themeMode;
   final String defaultCurrency;
+  final bool isPinEnabled;
   final bool isBusy;
   final String? notificationMessage;
   final String? errorMessage;
@@ -16,6 +23,7 @@ class SettingsState {
   const SettingsState({
     required this.themeMode,
     required this.defaultCurrency,
+    this.isPinEnabled = false,
     this.isBusy = false,
     this.notificationMessage,
     this.errorMessage,
@@ -24,6 +32,7 @@ class SettingsState {
   SettingsState copyWith({
     String? themeMode,
     String? defaultCurrency,
+    bool? isPinEnabled,
     bool? isBusy,
     String? notificationMessage,
     String? errorMessage,
@@ -33,6 +42,7 @@ class SettingsState {
     return SettingsState(
       themeMode: themeMode ?? this.themeMode,
       defaultCurrency: defaultCurrency ?? this.defaultCurrency,
+      isPinEnabled: isPinEnabled ?? this.isPinEnabled,
       isBusy: isBusy ?? this.isBusy,
       notificationMessage: clearNotification
           ? null
@@ -49,19 +59,64 @@ class SettingsController extends ChangeNotifier {
   final ExportBackupUseCase _exportBackupUseCase;
   final ImportBackupUseCase _importBackupUseCase;
   final BackupRepository _backupRepository;
+  final IsPinEnabledUseCase? isPinEnabledUseCase;
+  final SetPinUseCase? setPinUseCase;
+  final DisablePinUseCase? disablePinUseCase;
+  final VerifyPinUseCase? verifyPinUseCase;
+  final Duration? autoDismissDuration;
+  Timer? _dismissTimer;
+  bool _disposed = false;
 
   SettingsController({
     required ExportBackupUseCase exportBackupUseCase,
     required ImportBackupUseCase importBackupUseCase,
     required BackupRepository backupRepository,
+    this.isPinEnabledUseCase,
+    this.setPinUseCase,
+    this.disablePinUseCase,
+    this.verifyPinUseCase,
+    this.autoDismissDuration,
   }) : _exportBackupUseCase = exportBackupUseCase,
        _importBackupUseCase = importBackupUseCase,
        _backupRepository = backupRepository;
+
+  @override
+  void dispose() {
+    _disposed = true;
+    _dismissTimer?.cancel();
+    _dismissTimer = null;
+    super.dispose();
+  }
 
   ViewState<SettingsState> _state = const ViewStateData(
     SettingsState(themeMode: 'system', defaultCurrency: 'USD'),
   );
   ViewState<SettingsState> get state => _state;
+
+  void clearNotificationAndError() {
+    _dismissTimer?.cancel();
+    _dismissTimer = null;
+    final current = _state.dataOrNull;
+    if (current == null) return;
+    if (current.notificationMessage != null || current.errorMessage != null) {
+      _state = ViewStateData(
+        current.copyWith(clearNotification: true, clearError: true),
+      );
+      if (!_disposed) {
+        notifyListeners();
+      }
+    }
+  }
+
+  void _scheduleAutoDismiss() {
+    if (autoDismissDuration == null) return;
+    _dismissTimer?.cancel();
+    _dismissTimer = Timer(autoDismissDuration!, () {
+      if (!_disposed) {
+        clearNotificationAndError();
+      }
+    });
+  }
 
   void updateThemeMode(String mode) {
     final current = _state.dataOrNull;
@@ -75,6 +130,63 @@ class SettingsController extends ChangeNotifier {
     if (current == null) return;
     _state = ViewStateData(current.copyWith(defaultCurrency: currency));
     notifyListeners();
+  }
+
+  Future<void> loadPinStatus() async {
+    if (isPinEnabledUseCase == null) return;
+    final res = await isPinEnabledUseCase!(const NoParams());
+    if (res.isSuccess) {
+      final current = _state.dataOrNull;
+      if (current != null) {
+        _state = ViewStateData(
+          current.copyWith(isPinEnabled: res.dataOrNull ?? false),
+        );
+        notifyListeners();
+      }
+    }
+  }
+
+  Future<bool> setPin(String pin) async {
+    if (setPinUseCase == null) return false;
+    final res = await setPinUseCase!(pin);
+    if (res.isSuccess) {
+      final current = _state.dataOrNull;
+      if (current != null) {
+        _state = ViewStateData(
+          current.copyWith(
+            isPinEnabled: true,
+            notificationMessage: 'تم تفعيل قفل التطبيق بنجاح',
+          ),
+        );
+        notifyListeners();
+        _scheduleAutoDismiss();
+      }
+      return true;
+    }
+    return false;
+  }
+
+  Future<bool> disablePin(String currentPin) async {
+    if (verifyPinUseCase == null || disablePinUseCase == null) return false;
+    final verifyRes = await verifyPinUseCase!(currentPin);
+    if (verifyRes.isSuccess && verifyRes.dataOrNull == true) {
+      final res = await disablePinUseCase!(const NoParams());
+      if (res.isSuccess) {
+        final current = _state.dataOrNull;
+        if (current != null) {
+          _state = ViewStateData(
+            current.copyWith(
+              isPinEnabled: false,
+              notificationMessage: 'تم إلغاء قفل التطبيق',
+            ),
+          );
+          notifyListeners();
+          _scheduleAutoDismiss();
+        }
+        return true;
+      }
+    }
+    return false;
   }
 
   Future<String?> exportBackup() async {
@@ -96,6 +208,7 @@ class SettingsController extends ChangeNotifier {
           ),
         );
         notifyListeners();
+        _scheduleAutoDismiss();
         return result.valueOrNull;
       } else {
         _state = ViewStateData(
@@ -106,6 +219,7 @@ class SettingsController extends ChangeNotifier {
           ),
         );
         notifyListeners();
+        _scheduleAutoDismiss();
         return null;
       }
     } finally {
@@ -142,6 +256,7 @@ class SettingsController extends ChangeNotifier {
           ),
         );
         notifyListeners();
+        _scheduleAutoDismiss();
         return true;
       } else {
         _state = ViewStateData(
@@ -153,6 +268,7 @@ class SettingsController extends ChangeNotifier {
           ),
         );
         notifyListeners();
+        _scheduleAutoDismiss();
         return false;
       }
     } finally {
@@ -183,6 +299,7 @@ class SettingsController extends ChangeNotifier {
           ),
         );
         notifyListeners();
+        _scheduleAutoDismiss();
         return true;
       } else {
         _state = ViewStateData(
@@ -193,6 +310,7 @@ class SettingsController extends ChangeNotifier {
           ),
         );
         notifyListeners();
+        _scheduleAutoDismiss();
         return false;
       }
     } catch (e) {
@@ -200,6 +318,7 @@ class SettingsController extends ChangeNotifier {
         current.copyWith(isBusy: false, errorMessage: e.toString()),
       );
       notifyListeners();
+      _scheduleAutoDismiss();
       return false;
     }
   }

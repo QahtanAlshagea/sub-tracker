@@ -30,6 +30,15 @@ void main() {
         SubscriptionStatus.fromString('intrash'),
         SubscriptionStatus.inTrash,
       );
+      expect(
+        SubscriptionStatus.fromString('overdue'),
+        SubscriptionStatus.overdue,
+      );
+    });
+
+    test('overdue status flag evaluates correctly', () {
+      expect(SubscriptionStatus.overdue.isOverdue, isTrue);
+      expect(SubscriptionStatus.overdue.isActive, isFalse);
     });
 
     test('US-03: rejects invalid status string with ValidationFailure', () {

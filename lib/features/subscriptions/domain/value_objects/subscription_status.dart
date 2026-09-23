@@ -9,11 +9,15 @@ enum SubscriptionStatus {
   archived,
 
   /// In the soft-delete trash bin. Eligible for restore or permanent purge.
-  inTrash;
+  inTrash,
+
+  /// Overdue subscription whose payment deadline has passed.
+  overdue;
 
   bool get isActive => this == SubscriptionStatus.active;
   bool get isArchived => this == SubscriptionStatus.archived;
   bool get isInTrash => this == SubscriptionStatus.inTrash;
+  bool get isOverdue => this == SubscriptionStatus.overdue;
 
   /// Parses a status from its string identifier.
   static SubscriptionStatus fromString(String raw) {
@@ -25,6 +29,8 @@ enum SubscriptionStatus {
       case 'in_trash':
       case 'intrash':
         return SubscriptionStatus.inTrash;
+      case 'overdue':
+        return SubscriptionStatus.overdue;
       default:
         throw ValidationFailure('Unknown subscription status: "$raw".');
     }

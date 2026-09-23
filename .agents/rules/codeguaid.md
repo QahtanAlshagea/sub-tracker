@@ -1,3 +1,7 @@
+---
+trigger: always_on
+---
+
 # codeguaid.md — Mandatory Operating Rules for the Sub Tracker Coding Agent
 
 > **Scope:** These rules are binding for every agent session in this workspace (Google Antigravity IDE, Gemini Coding Agent).
@@ -177,77 +181,165 @@ The agent must refuse and explain when asked to:
 3. Import Flutter or persistence packages into `domain/`.
 4. Add a network call, remote sync, analytics SDK, or any internet permission (out of scope `OS-01`…`OS-07`).
 5. Store secrets, card numbers, or financial identifiers anywhere in the repo or logs.
-6. Push directly to `main` or `develop`, or bypass a Pull Request.
-7. Add a dependency without justification, license check, and approval by the team lead.
-8. Perform a wide refactor bundled with a feature task. One concern per branch.
-9. Delete or rewrite tests to achieve green output.
-10. Generate code it cannot explain line by line on request.
-
+6. Push directly to `main` or `develop`, or bypass a Pull Request
 ---
 
-## 6. VERSION CONTROL RULES
+## 6. MANDATORY CARD / STORY REPORT SCHEMA
 
-- Branch naming: `feature|fix|docs/issue-<id>-<short-kebab-name>`.
-- Conventional Commits only: `feat|fix|test|refactor|docs|chore|style|perf(<scope>): <imperative summary>` with `Refs #<id>`.
-- One task per branch, one branch per Pull Request.
-- The PR body must list the covered edge-case ids and the analyze/test output.
-
----
-
-## 7. TRANSPARENCY AND LOGGING
-
-Every non-trivial agent contribution is appended to `AI_Log.md` with: date, requesting team member, tool, purpose, accepted suggestions, rejected suggestions, and the human review outcome.
-The agent never claims authorship of engineering decisions; it proposes, the human decides, and the log records both.
-
----
-
-## 8. RESPONSE FORMAT CONTRACT
-
-Every agent reply that implements or verifies code/specs in this project must contain, in order:
+Every Story / Card implementation completion report in this project must contain, in order:
 
 ```markdown
-SKILLS APPLIED: <list or "none — rationale">
-REQUIREMENT TRACE: Card C-XX / FR-XX / US-XX / [EC-XX-Y]
-PLAN: <numbered steps, target layer, file paths>
-TEST CONTRACT: <named tests mirroring lib/ in test/>
-CHANGES: <files created or modified>
-VERIFICATION: <format / analyze / test output>
-SELF-AUDIT: <7 YES/NO answers from §1 Step 7>
-
----
-
 ### تقرير الإنجاز: [رمز البطاقة أو القصة] — [العنوان]
 
-**المتطلب المسنَد إليه:** FR-XX / NFR-XX / US-XX
+**المتطلب المستند إليه:** `FR-XX` أو `NFR-XX` من `docs/SRS.md` وقصة `US-XX` مع حالات الحافة `[EC-XX-Y]`.
 
-**ما نُفِّذ:**
-- [شرح مختصر للمنطق المبني، بلغة واضحة هندسية ومباشرة]
+**SKILLS APPLIED:** `skill-1`, `skill-2`, ...
 
-**الملفات المتأثرة:**
-- أُنشئ: [قائمة المسارات]
-- عُدِّل: [قائمة المسارات]
+**التغييرات المنجزة:**
+- الطبقة والملفات المنشأة والمعدلة.
+- العقود والمستودعات وحالات الاستخدام المنفذة.
 
-**الاختبارات:**
-- عدد الاختبارات المضافة: [رقم]
-- حالات الحافة المغطاة: [قائمة بمعرفاتها المسماة EC-XX-Y]
-- نتيجة التشغيل: [ناجحة بالكامل / تفاصيل أي معالجة]
+**عقد الاختبار وحالات الحافة المغطاة:**
+- أسماء الاختبارات المنفذة وحالات الحافة.
 
-**كيف تجرّبها بنفسك يدوياً:**
-- [خطوات تحقق واضحة وقابلة للتنفيذ]
+**نتائج الفحص والتحقق:**
+- `dart format --set-exit-if-changed .` -> Clean
+- `flutter analyze --fatal-infos` -> No issues found!
+- `flutter test` -> 100% passing tests
 
-**الفرع والالتزام:**
-- اسم الفرع: [feature/... أو docs/...]
-- رسالة الالتزام: [Conventional Commit]
-
-**بطاقة كانبان والتريلو:**
-- [حالة البطاقة على Trello والمطلوب نقلها إليه]
-
-**افتراضات أو قرارات معمارية اتُّخذت:**
-- [أي قرار أو افتراض تقني اتسق مع النظام لمراجعته]
-
----
-**بانتظار أمرك: "انتقل" أو أي ملاحظات للمراجعة.**
+**التدقيق الذاتي (Self-Audit Checklist):**
+1. هل طبقة الدومين نقية 100% وبلا أي استيراد لـ Flutter أو Drift؟ [نعم/لا]
+2. هل لكل واجهة أو كائن عام اختبار؟ [نعم/لا]
+3. هل كل حالة حافة من القصة مغطاة باختبار مسمى؟ [نعم/لا]
+4. هل الجداول، والـ DAOs، والمصادر، والمستودعات في ملفات معزولة؟ [نعم/لا]
+5. هل يتم تحويل الاستثناءات المنخفضة إلى Failures عند حدود المستودع؟ [نعم/لا]
+6. هل نطاق التعديل مقتصر على المهمة فقط؟ [نعم/لا]
+7. هل حُدثت الوثائق وسجل الذكاء الاصطناعي `AI_Log.md`؟ [نعم/لا]
 ```
 
 A reply missing any section is non-compliant and must be regenerated before the work is accepted.
 
+---
+
+## 7. CONCRETE ARCHITECTURAL PATTERNS & CODE EXAMPLES
+
+### 7.1 Pure Domain Value Object with Invariant & Cryptographic Hashing
+```dart
+// domain/value_objects/pin_code.dart
+class PinCode {
+  final String hash;
+  PinCode._(this.hash);
+
+  static Either<Failure, PinCode> create(String rawDigits) {
+    if (!RegExp(r'^\d{4}$').hasMatch(rawDigits)) {
+      return Left(ValidationFailure('PIN must consist of exactly 4 digits'));
+    }
+    final bytes = utf8.encode(rawDigits);
+    final digest = sha256.convert(bytes);
+    return Right(PinCode._(digest.toString()));
+  }
+
+  bool verify(String rawInput) {
+    final inputHash = sha256.convert(utf8.encode(rawInput)).toString();
+    return hash == inputHash;
+  }
+}
+```
+
+### 7.2 Interface Inversion & Exception Isolation (DIP + LSP)
+```dart
+// domain/repositories/security_repository.dart (Pure Dart Interface)
+abstract class SecurityRepository {
+  Future<Either<Failure, bool>> isPinEnabled();
+  Future<Either<Failure, void>> setPin(PinCode pin);
+  Future<Either<Failure, bool>> verifyPin(String rawDigits);
+  Future<Either<Failure, void>> disablePin();
+}
+
+// data/repositories/security_repository_impl.dart (Data Layer Implementation)
+class SecurityRepositoryImpl implements SecurityRepository {
+  final SecurityLocalDataSource _dataSource;
+  SecurityRepositoryImpl(this._dataSource);
+
+  @override
+  Future<Either<Failure, bool>> verifyPin(String rawDigits) async {
+    try {
+      final pinResult = PinCode.create(rawDigits);
+      return pinResult.fold(
+        (failure) => Left(failure),
+        (pin) async {
+          final isMatch = await _dataSource.verifyPinHash(pin.hash);
+          return Right(isMatch);
+        },
+      );
+    } on SqliteException catch (e) {
+      return Left(DatabaseFailure('Database error verifying PIN: ${e.message}'));
+    } catch (e) {
+      return Left(DatabaseFailure('Unexpected security storage failure: $e'));
+    }
+  }
+}
+```
+
+### 7.3 Atomic Financial Audit Trail & Price History
+```dart
+// data/datasources/subscription_local_data_source.dart
+Future<void> updateSubscriptionPriceWithHistory({
+  required int subscriptionId,
+  required int newAmountMinor,
+  required String currencyCode,
+}) async {
+  await _db.transaction(() async {
+    final current = await _subscriptionDao.getSubscriptionById(subscriptionId);
+    if (current != null && current.amount != newAmountMinor) {
+      // Record immutable historical price entry before updating
+      await _priceHistoryDao.insertPriceEntry(
+        PriceHistoryCompanion.insert(
+          subscriptionId: subscriptionId,
+          oldAmount: current.amount,
+          newAmount: newAmountMinor,
+          currencyCode: currencyCode,
+          changedAt: DateTime.now().toUtc(),
+        ),
+      );
+      await _subscriptionDao.updateAmount(subscriptionId, newAmountMinor);
+    }
+  });
+}
+```
+
+### 7.4 Authentic Arabic Pluralization Engine
+```dart
+// presentation/formatters/arabic_plural_formatter.dart
+class ArabicPluralFormatter {
+  static String formatPaymentsCount(int count) {
+    if (count == 0) return 'لا توجد دفعات';
+    if (count == 1) return 'دفعة واحدة';
+    if (count == 2) return 'دفعتان';
+    if (count >= 3 && count <= 10) return '$count دفعات';
+    return '$count دفعة';
+  }
+}
+```
+
+### 7.5 Interactive Visual Analytics (fl_chart)
+```dart
+// presentation/widgets/category_pie_chart.dart
+PieChart(
+  PieChartData(
+    pieTouchData: PieTouchData(
+      touchCallback: (event, pieTouchResponse) {
+        // Enlarge slice and display detailed metrics in center
+      },
+    ),
+    sectionsSpace: 3,
+    centerSpaceRadius: 46,
+    sections: categories.map((cat) => PieChartSectionData(
+      color: cat.color,
+      value: cat.totalCost,
+      title: '${cat.percentage}%',
+      radius: isTouched ? 42.0 : 34.0,
+    )).toList(),
+  ),
+);
+```

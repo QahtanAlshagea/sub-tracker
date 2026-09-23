@@ -7,6 +7,7 @@ import '../../../../core/theme/tokens/app_spacing.dart';
 import '../../domain/entities/category.dart';
 import '../../domain/entities/subscription.dart';
 import '../../domain/value_objects/subscription_status.dart';
+import '../formatters/arabic_plural_formatter.dart';
 import '../formatters/currency_formatter.dart';
 import '../formatters/date_formatter.dart';
 
@@ -21,6 +22,7 @@ import '../formatters/date_formatter.dart';
 class SubscriptionCard extends StatelessWidget {
   final Subscription subscription;
   final Category? category;
+  final int paymentCount;
   final VoidCallback? onTap;
   final VoidCallback? onMarkPaid;
   final VoidCallback? onDelete;
@@ -29,6 +31,7 @@ class SubscriptionCard extends StatelessWidget {
     super.key,
     required this.subscription,
     this.category,
+    this.paymentCount = 0,
     this.onTap,
     this.onMarkPaid,
     this.onDelete,
@@ -41,6 +44,7 @@ class SubscriptionCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
 
     final daysRemaining = subscription.dueDate.daysUntil(DateTime.now());
+    final isOverdue = subscription.isOverdue || daysRemaining < 0;
 
     final categoryName = category?.name ?? (l10n?.uncategorized ?? 'غير مصنف');
     final categoryColor = category != null
@@ -52,7 +56,7 @@ class SubscriptionCard extends StatelessWidget {
       badgeType = StatusBadgeType.archived;
     } else if (subscription.isTrial) {
       badgeType = StatusBadgeType.trial;
-    } else if (daysRemaining < 0) {
+    } else if (isOverdue) {
       badgeType = StatusBadgeType.overdue;
     } else if (daysRemaining <= 3) {
       badgeType = StatusBadgeType.dueSoon;
@@ -68,8 +72,10 @@ class SubscriptionCard extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: AppRadii.cardRadius,
         side: BorderSide(
-          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-          width: 1.0,
+          color: isOverdue
+              ? AppColors.rose500.withValues(alpha: 0.7)
+              : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
+          width: isOverdue ? 1.5 : 1.0,
         ),
       ),
       clipBehavior: Clip.antiAlias,
@@ -84,29 +90,90 @@ class SubscriptionCard extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  Expanded(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 10,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            color: categoryColor,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.xs),
+                        Flexible(
+                          child: Text(
+                            categoryName,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              color: isDark
+                                  ? AppColors.darkTextSecondary
+                                  : AppColors.lightTextSecondary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.xs),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? AppColors.darkSurface
+                                : AppColors.slate100,
+                            borderRadius: BorderRadius.circular(AppRadii.sm),
+                            border: Border.all(
+                              color: isDark
+                                  ? AppColors.darkBorder
+                                  : AppColors.lightBorder,
+                              width: 0.8,
+                            ),
+                          ),
+                          child: Text(
+                            subscription.obligationType.displayNameArabic,
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: isDark
+                                  ? AppColors.darkTextSecondary
+                                  : AppColors.lightTextSecondary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.xs),
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Container(
-                        width: 10,
-                        height: 10,
-                        decoration: BoxDecoration(
-                          color: categoryColor,
-                          shape: BoxShape.circle,
+                      if (paymentCount > 0) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.xs,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.emerald500.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(AppRadii.sm),
+                          ),
+                          child: Text(
+                            '✓ ${ArabicPluralFormatter.formatPaymentsCount(paymentCount)}',
+                            style: const TextStyle(
+                              color: AppColors.emerald600,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: AppSpacing.xs),
-                      Text(
-                        categoryName,
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          color: isDark
-                              ? AppColors.darkTextSecondary
-                              : AppColors.lightTextSecondary,
-                        ),
-                      ),
+                        const SizedBox(width: AppSpacing.xs),
+                      ],
+                      AccessibleStatusBadge(type: badgeType),
                     ],
                   ),
-                  AccessibleStatusBadge(type: badgeType),
                 ],
               ),
               const SizedBox(height: AppSpacing.sm),
@@ -153,39 +220,45 @@ class SubscriptionCard extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.event_outlined,
-                        size: 16,
-                        color: isDark
-                            ? AppColors.darkTextSecondary
-                            : AppColors.lightTextSecondary,
-                      ),
-                      const SizedBox(width: AppSpacing.xs),
-                      Text(
-                        l10n != null
-                            ? DateFormatter.formatRemainingDays(
-                                daysRemaining,
-                                l10n,
-                              )
-                            : '$daysRemaining days',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: daysRemaining < 0
-                              ? (isDark
-                                    ? AppColors.darkError
-                                    : AppColors.lightError)
-                              : daysRemaining <= 3
-                              ? (isDark
-                                    ? AppColors.darkWarning
-                                    : AppColors.lightWarning)
-                              : (isDark
-                                    ? AppColors.darkTextSecondary
-                                    : AppColors.lightTextSecondary),
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.event_outlined,
+                          size: 16,
+                          color: isDark
+                              ? AppColors.darkTextSecondary
+                              : AppColors.lightTextSecondary,
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: AppSpacing.xs),
+                        Expanded(
+                          child: Text(
+                            l10n != null
+                                ? DateFormatter.formatRemainingDays(
+                                    daysRemaining,
+                                    l10n,
+                                  )
+                                : '$daysRemaining days',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: daysRemaining < 0
+                                  ? (isDark
+                                        ? AppColors.darkError
+                                        : AppColors.lightError)
+                                  : daysRemaining <= 3
+                                  ? (isDark
+                                        ? AppColors.darkWarning
+                                        : AppColors.lightWarning)
+                                  : (isDark
+                                        ? AppColors.darkTextSecondary
+                                        : AppColors.lightTextSecondary),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   Row(
                     mainAxisSize: MainAxisSize.min,
@@ -213,13 +286,24 @@ class SubscriptionCard extends StatelessWidget {
                           key: const Key('subscription_card_pay_button'),
                           child: TextButton.icon(
                             onPressed: onMarkPaid,
-                            icon: const Icon(
-                              Icons.check_circle_outline_rounded,
+                            icon: Icon(
+                              daysRemaining <= 7
+                                  ? Icons.check_circle_outline_rounded
+                                  : Icons.done_all_rounded,
                               size: 18,
                             ),
-                            label: Text(l10n?.markAsPaid ?? 'تسديد'),
+                            label: Text(
+                              daysRemaining <= 7
+                                  ? (l10n?.markAsPaid ?? 'تسديد')
+                                  : (l10n != null ? 'مسدد' : 'Mark Paid'),
+                            ),
                             style: TextButton.styleFrom(
                               visualDensity: VisualDensity.compact,
+                              foregroundColor: daysRemaining <= 7
+                                  ? AppColors.emerald500
+                                  : (isDark
+                                        ? AppColors.darkTextSecondary
+                                        : AppColors.lightTextSecondary),
                               padding: const EdgeInsets.symmetric(
                                 horizontal: AppSpacing.sm,
                                 vertical: AppSpacing.xs,

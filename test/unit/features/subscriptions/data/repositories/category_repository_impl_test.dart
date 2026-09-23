@@ -208,7 +208,7 @@ void main() {
       'catches SqliteException and maps to DatabaseFailure with zero leak',
       () async {
         final failingDataSource = FailingCategoryLocalDataSource(
-          SqliteException(extendedResultCode: 1, message: 'disk I/O error'),
+          SqliteException(1, 'disk I/O error'),
         );
         final failingRepo = CategoryRepositoryImpl(failingDataSource);
 
@@ -243,7 +243,7 @@ void main() {
       'watchCategories catches stream exceptions and emits Result.failure',
       () async {
         final failingDataSource = FailingCategoryLocalDataSource(
-          SqliteException(extendedResultCode: 1, message: 'stream error'),
+          SqliteException(1, 'stream error'),
         );
         final failingRepo = CategoryRepositoryImpl(failingDataSource);
 

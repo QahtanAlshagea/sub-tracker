@@ -210,6 +210,9 @@ void main() {
         await tester.pumpWidget(createWidget());
         await tester.pumpAndSettle();
 
+        await tester.drag(find.byType(ListView), const Offset(0, -300));
+        await tester.pumpAndSettle();
+
         await tester.tap(find.byKey(const Key('settings_wipe_data_tile')));
         await tester.pumpAndSettle();
 
@@ -246,6 +249,10 @@ void main() {
         await tester.tap(confirmBtn);
         await tester.pumpAndSettle();
 
+        // Scroll back to top to view success banner
+        await tester.drag(find.byType(ListView), const Offset(0, 300));
+        await tester.pumpAndSettle();
+
         expect(fakeRepo.wipeCalled, isTrue);
         expect(find.text('تم مسح جميع البيانات بنجاح'), findsOneWidget);
       },
@@ -272,6 +279,81 @@ void main() {
           final size = tester.getSize(touchTarget);
           expect(size.height, greaterThanOrEqualTo(48.0));
         }
+      },
+    );
+
+    testWidgets(
+      '7. Banner: Close icon manually dismisses notification banner',
+      (tester) async {
+        await tester.pumpWidget(createWidget());
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byKey(const Key('settings_export_backup_tile')));
+        await tester.pumpAndSettle();
+
+        expect(find.text('تم تصدير النسخة الاحتياطية بنجاح'), findsOneWidget);
+        expect(
+          find.byKey(const Key('settings_banner_dismiss_button')),
+          findsOneWidget,
+        );
+
+        await tester.tap(
+          find.byKey(const Key('settings_banner_dismiss_button')),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('تم تصدير النسخة الاحتياطية بنجاح'), findsNothing);
+      },
+    );
+
+    testWidgets('8. Banner: Auto-dismisses after configured duration', (
+      tester,
+    ) async {
+      final timedController = SettingsController(
+        exportBackupUseCase: ExportBackupUseCase(fakeRepo),
+        importBackupUseCase: ImportBackupUseCase(fakeRepo),
+        backupRepository: fakeRepo,
+        autoDismissDuration: const Duration(seconds: 2),
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.light,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          locale: const Locale('ar'),
+          home: SettingsScreen(controller: timedController),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('settings_export_backup_tile')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('تم تصدير النسخة الاحتياطية بنجاح'), findsOneWidget);
+
+      // Advance fake time past 2 seconds
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pumpAndSettle();
+
+      expect(find.text('تم تصدير النسخة الاحتياطية بنجاح'), findsNothing);
+
+      timedController.dispose();
+    });
+
+    testWidgets(
+      '9. Security: renders PIN security switch and default disabled status',
+      (tester) async {
+        await tester.pumpWidget(createWidget());
+        await tester.pumpAndSettle();
+
+        final pinSwitchFinder = find.byKey(const Key('settings_pin_switch'));
+        expect(pinSwitchFinder, findsOneWidget);
+        expect(find.text('قفل التطبيق برمز PIN'), findsOneWidget);
+        expect(
+          find.text('حماية بياناتك وسجلاتك المالية محلياً'),
+          findsOneWidget,
+        );
       },
     );
   });

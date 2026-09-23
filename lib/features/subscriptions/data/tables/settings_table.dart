@@ -44,6 +44,13 @@ class Settings extends Table {
   IntColumn get schemaVersion =>
       integer().named('schema_version').withDefault(const Constant(2))();
 
+  /// SHA-256 hash of the 4-digit security PIN (null if disabled).
+  TextColumn get pinHash => text().named('pin_hash').nullable()();
+
+  /// Whether security PIN lock screen is required when launching the app.
+  BoolColumn get isPinEnabled =>
+      boolean().named('is_pin_enabled').withDefault(const Constant(false))();
+
   /// Timestamp of the last settings update in UTC.
   DateTimeColumn get updatedAt => dateTime().named('updated_at')();
 

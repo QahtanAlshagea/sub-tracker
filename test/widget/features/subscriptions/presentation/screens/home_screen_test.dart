@@ -7,6 +7,7 @@ import 'package:sub_tracker/features/subscriptions/domain/entities/category.dart
 import 'package:sub_tracker/features/subscriptions/domain/entities/subscription.dart';
 import 'package:sub_tracker/core/error/failures.dart';
 import 'package:sub_tracker/features/subscriptions/domain/repositories/category_repository.dart';
+import 'package:sub_tracker/features/subscriptions/domain/repositories/payment_repository.dart';
 import 'package:sub_tracker/features/subscriptions/domain/repositories/subscription_repository.dart';
 import 'package:sub_tracker/features/subscriptions/domain/usecases/get_categories_usecase.dart';
 import 'package:sub_tracker/features/subscriptions/domain/usecases/get_subscriptions_usecase.dart';
@@ -14,6 +15,7 @@ import 'package:sub_tracker/features/subscriptions/domain/usecases/renew_subscri
 import 'package:sub_tracker/features/subscriptions/domain/value_objects/billing_cycle.dart';
 import 'package:sub_tracker/features/subscriptions/domain/value_objects/due_date.dart';
 import 'package:sub_tracker/features/subscriptions/domain/value_objects/money.dart';
+import 'package:sub_tracker/features/subscriptions/domain/value_objects/obligation_type.dart';
 import 'package:sub_tracker/features/subscriptions/domain/value_objects/subscription_status.dart';
 import 'package:sub_tracker/features/subscriptions/presentation/screens/home_screen.dart';
 import 'package:sub_tracker/features/subscriptions/presentation/state/subscriptions_list_controller.dart';
@@ -65,19 +67,34 @@ class FakeCategoryRepository implements CategoryRepository {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
+class FakePaymentRepository implements PaymentRepository {
+  Map<String, int> paymentCounts = {};
+
+  @override
+  Future<Result<Map<String, int>>> getAllPaymentCounts() async {
+    return Success(paymentCounts);
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
 void main() {
   group('HomeScreen Four View States & Interactions', () {
     late FakeSubscriptionRepository fakeSubRepo;
     late FakeCategoryRepository fakeCatRepo;
+    late FakePaymentRepository fakePaymentRepo;
     late SubscriptionsListController controller;
 
     setUp(() {
       fakeSubRepo = FakeSubscriptionRepository();
       fakeCatRepo = FakeCategoryRepository();
+      fakePaymentRepo = FakePaymentRepository();
       controller = SubscriptionsListController(
         getSubscriptionsUseCase: GetSubscriptionsUseCase(fakeSubRepo),
         renewSubscriptionUseCase: RenewSubscriptionUseCase(fakeSubRepo),
         getCategoriesUseCase: GetCategoriesUseCase(fakeCatRepo),
+        paymentRepository: fakePaymentRepo,
       );
     });
 
@@ -186,6 +203,188 @@ void main() {
         final fabRect = tester.getRect(fabFinder);
         expect(fabRect.width, greaterThanOrEqualTo(48.0));
         expect(fabRect.height, greaterThanOrEqualTo(48.0));
+      },
+    );
+
+    testWidgets(
+      '5. Filter Chips: filters subscriptions by due soon and settled',
+      (tester) async {
+        final now = DateTime.now();
+        fakeSubRepo.subscriptionsToReturn = [
+          Subscription.create(
+            id: 'sub-due',
+            name: 'Due Soon Sub',
+            price: Money.create(amountMinorUnits: 1000, currencyCode: 'USD'),
+            cycle: const BillingCycle.monthly(),
+            startDate: now.subtract(const Duration(days: 30)),
+            dueDate: DueDate(now.add(const Duration(days: 2)), now.day),
+            categoryId: 'cat-1',
+          ),
+          Subscription.create(
+            id: 'sub-settled',
+            name: 'Settled Sub',
+            price: Money.create(amountMinorUnits: 2000, currencyCode: 'USD'),
+            cycle: const BillingCycle.monthly(),
+            startDate: now.subtract(const Duration(days: 10)),
+            dueDate: DueDate(now.add(const Duration(days: 25)), now.day),
+            categoryId: 'cat-1',
+          ),
+        ];
+        fakePaymentRepo.paymentCounts = {'sub-settled': 1};
+
+        await tester.pumpWidget(createWidget());
+        await controller.loadSubscriptions();
+        await tester.pumpAndSettle();
+
+        // 1. All tab (default)
+        expect(find.text('Due Soon Sub'), findsOneWidget);
+        expect(find.text('Settled Sub'), findsOneWidget);
+
+        // 2. Tap Due Soon chip
+        await tester.tap(find.byKey(const Key('filter_chip_due_soon')));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Due Soon Sub'), findsOneWidget);
+        expect(find.text('Settled Sub'), findsNothing);
+
+        // 3. Tap Settled chip
+        await tester.tap(find.byKey(const Key('filter_chip_settled')));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Due Soon Sub'), findsNothing);
+        expect(find.text('Settled Sub'), findsOneWidget);
+      },
+    );
+
+    testWidgets('6. Overdue Filter: displays only overdue commitments', (
+      tester,
+    ) async {
+      final now = DateTime.now();
+      fakeSubRepo.subscriptionsToReturn = [
+        Subscription.create(
+          id: 'sub-active',
+          name: 'Active Sub',
+          price: Money.create(amountMinorUnits: 1000, currencyCode: 'USD'),
+          cycle: const BillingCycle.monthly(),
+          startDate: now.subtract(const Duration(days: 10)),
+          dueDate: DueDate(now.add(const Duration(days: 20)), now.day),
+          categoryId: 'cat-1',
+        ),
+        Subscription.create(
+          id: 'sub-overdue',
+          name: 'Overdue Rent',
+          price: Money.create(amountMinorUnits: 50000, currencyCode: 'USD'),
+          cycle: const BillingCycle.monthly(),
+          startDate: now.subtract(const Duration(days: 40)),
+          dueDate: DueDate(now.subtract(const Duration(days: 5)), now.day),
+          categoryId: 'cat-1',
+          obligationType: ObligationType.rent,
+        ),
+      ];
+
+      await tester.pumpWidget(createWidget());
+      await controller.loadSubscriptions();
+      await tester.pumpAndSettle();
+
+      // Tap Overdue chip
+      final overdueChip = find.byKey(const Key('filter_chip_overdue'));
+      await tester.ensureVisible(overdueChip);
+      await tester.tap(overdueChip);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Overdue Rent'), findsOneWidget);
+      expect(find.text('Active Sub'), findsNothing);
+    });
+
+    testWidgets(
+      '7. Search Bar: filters commitments in real-time by search query',
+      (tester) async {
+        final now = DateTime.now();
+        fakeSubRepo.subscriptionsToReturn = [
+          Subscription.create(
+            id: 'sub-1',
+            name: 'Netflix Premium',
+            price: Money.create(amountMinorUnits: 1500, currencyCode: 'USD'),
+            cycle: const BillingCycle.monthly(),
+            startDate: now,
+            dueDate: DueDate(now.add(const Duration(days: 15)), now.day),
+            categoryId: 'cat-1',
+          ),
+          Subscription.create(
+            id: 'sub-2',
+            name: 'Electricity Bill',
+            price: Money.create(amountMinorUnits: 8000, currencyCode: 'USD'),
+            cycle: const BillingCycle.monthly(),
+            startDate: now,
+            dueDate: DueDate(now.add(const Duration(days: 5)), now.day),
+            categoryId: 'cat-1',
+            obligationType: ObligationType.bill,
+          ),
+        ];
+
+        await tester.pumpWidget(createWidget());
+        await controller.loadSubscriptions();
+        await tester.pumpAndSettle();
+
+        expect(find.text('Netflix Premium'), findsOneWidget);
+        expect(find.text('Electricity Bill'), findsOneWidget);
+
+        // Enter search text
+        await tester.enterText(
+          find.byKey(const Key('home_search_field')),
+          'elect',
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Electricity Bill'), findsOneWidget);
+        expect(find.text('Netflix Premium'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      '8. Obligation Type Chips: filters subscriptions by obligation type',
+      (tester) async {
+        final now = DateTime.now();
+        fakeSubRepo.subscriptionsToReturn = [
+          Subscription.create(
+            id: 'sub-1',
+            name: 'Spotify Music',
+            price: Money.create(amountMinorUnits: 999, currencyCode: 'USD'),
+            cycle: const BillingCycle.monthly(),
+            startDate: now,
+            dueDate: DueDate(now.add(const Duration(days: 10)), now.day),
+            categoryId: 'cat-1',
+            obligationType: ObligationType.subscription,
+          ),
+          Subscription.create(
+            id: 'sub-2',
+            name: 'Apartment Rent',
+            price: Money.create(amountMinorUnits: 50000, currencyCode: 'USD'),
+            cycle: const BillingCycle.monthly(),
+            startDate: now,
+            dueDate: DueDate(now.add(const Duration(days: 10)), now.day),
+            categoryId: 'cat-1',
+            obligationType: ObligationType.rent,
+          ),
+        ];
+
+        await tester.pumpWidget(createWidget());
+        await controller.loadSubscriptions();
+        await tester.pumpAndSettle();
+
+        // Tap Rent type filter
+        await tester.tap(find.byKey(const Key('type_filter_rent')));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Apartment Rent'), findsOneWidget);
+        expect(find.text('Spotify Music'), findsNothing);
+
+        // Tap All type filter
+        await tester.tap(find.byKey(const Key('type_filter_all')));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Apartment Rent'), findsOneWidget);
+        expect(find.text('Spotify Music'), findsOneWidget);
       },
     );
   });

@@ -112,8 +112,9 @@ void main() {
         expect(slack.name, equals('Slack'));
         expect(slack.priceMinorUnits, equals(1200));
         expect(slack.currencyCode, equals('USD'));
-        // Verify paymentMethodDesc column was added by onUpgrade and is nullable/null for old records
+        // Verify paymentMethodDesc and obligationType columns were added by onUpgrade
         expect(slack.paymentMethodDesc, isNull);
+        expect(slack.obligationType, equals('subscription'));
 
         // Verify we can update the newly added column
         await (db.update(

@@ -181,9 +181,7 @@ void main() {
       'restoreBackup converts SqliteException to DatabaseFailure without leaking raw exceptions',
       () async {
         final repoWithError = BackupRepositoryImpl(
-          FakeErrorBackupLocalDataSource(
-            SqliteException(extendedResultCode: 1, message: 'Disk I/O error'),
-          ),
+          FakeErrorBackupLocalDataSource(SqliteException(1, 'Disk I/O error')),
         );
 
         const validJson =

@@ -4,6 +4,7 @@ import '../../domain/entities/subscription.dart';
 import '../../domain/value_objects/billing_cycle.dart';
 import '../../domain/value_objects/due_date.dart';
 import '../../domain/value_objects/money.dart';
+import '../../domain/value_objects/obligation_type.dart';
 import '../../domain/value_objects/subscription_status.dart';
 
 /// Data Model for Subscriptions.
@@ -21,6 +22,7 @@ class SubscriptionModel {
   final DateTime nextDueDate;
   final int originalAnchorDay;
   final String categoryId;
+  final String obligationType;
   final String status;
   final bool isTrial;
   final String? notes;
@@ -46,6 +48,7 @@ class SubscriptionModel {
     required this.nextDueDate,
     required this.originalAnchorDay,
     required this.categoryId,
+    this.obligationType = 'subscription',
     this.status = 'active',
     this.isTrial = false,
     this.notes,
@@ -74,6 +77,7 @@ class SubscriptionModel {
       nextDueDate: entity.dueDate.date,
       originalAnchorDay: entity.dueDate.originalAnchorDay,
       categoryId: entity.categoryId,
+      obligationType: entity.obligationType.name,
       status: entity.status.name,
       isTrial: entity.isTrial,
       notes: entity.notes,
@@ -106,6 +110,7 @@ class SubscriptionModel {
       ),
       startDate: startDate,
       categoryId: categoryId,
+      obligationType: ObligationType.fromString(obligationType),
       status: SubscriptionStatus.fromString(status),
       isTrial: isTrial,
       notes: notes,
@@ -135,6 +140,7 @@ class SubscriptionModel {
       nextDueDate: data.nextDueDate,
       originalAnchorDay: data.originalAnchorDay,
       categoryId: data.categoryId,
+      obligationType: data.obligationType,
       status: data.status,
       isTrial: data.isTrial,
       notes: data.notes,
@@ -164,6 +170,7 @@ class SubscriptionModel {
       nextDueDate: Value(nextDueDate),
       originalAnchorDay: Value(originalAnchorDay),
       categoryId: Value(categoryId),
+      obligationType: Value(obligationType),
       status: Value(status),
       isTrial: Value(isTrial),
       notes: Value(notes),
@@ -193,6 +200,7 @@ class SubscriptionModel {
       'next_due_date': nextDueDate.toIso8601String(),
       'original_anchor_day': originalAnchorDay,
       'category_id': categoryId,
+      'obligation_type': obligationType,
       'status': status,
       'is_trial': isTrial,
       'notes': notes,
@@ -222,6 +230,7 @@ class SubscriptionModel {
       nextDueDate: DateTime.parse(json['next_due_date'] as String).toUtc(),
       originalAnchorDay: json['original_anchor_day'] as int,
       categoryId: json['category_id'] as String,
+      obligationType: (json['obligation_type'] as String?) ?? 'subscription',
       status: (json['status'] as String?) ?? 'active',
       isTrial: (json['is_trial'] as bool?) ?? false,
       notes: json['notes'] as String?,
@@ -254,6 +263,7 @@ class SubscriptionModel {
           cycleType == other.cycleType &&
           customCycleDays == other.customCycleDays &&
           categoryId == other.categoryId &&
+          obligationType == other.obligationType &&
           status == other.status &&
           isTrial == other.isTrial &&
           startDate.isAtSameMomentAs(other.startDate) &&
@@ -269,6 +279,7 @@ class SubscriptionModel {
       cycleType.hashCode ^
       customCycleDays.hashCode ^
       categoryId.hashCode ^
+      obligationType.hashCode ^
       status.hashCode;
 
   @override

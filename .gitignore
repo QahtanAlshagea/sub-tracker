@@ -81,3 +81,13 @@ coverage/
 !/default.mode2v3
 !/default.pbxuser
 !/default.perspectivev3
+
+# Generated Reports & Local Binaries (Kept locally, excluded from git)
+*.pdf
+*.apk
+project_report.html
+test_img.html
+scratch/
+screenshots/
+
+
