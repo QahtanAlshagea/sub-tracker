@@ -21,6 +21,16 @@
   <img src="https://img.shields.io/badge/Privacy-100%25%20Offline%20First-10B981" alt="Offline First" />
 </p>
 
+<p align="center">
+  <a href="releases/Sub_Tracker_v2.0.0.apk">
+    <img src="https://img.shields.io/badge/📥_تحميل_تطبيق_الأندرويد_APK-v2.0.0_(60.7_MB)-2563EB?style=for-the-badge&logo=android&logoColor=white" alt="Download APK" />
+  </a>
+  &nbsp;
+  <a href="releases/Sub_Tracker_Academic_Report.pdf">
+    <img src="https://img.shields.io/badge/📄_تحميل_التقرير_الأكاديمي_الشامل-PDF_(4.9_MB)-DC2626?style=for-the-badge&logo=adobeacrobatreader&logoColor=white" alt="Download Academic Report" />
+  </a>
+</p>
+
 ---
 
 ## 👨‍🏫 إشراف 
