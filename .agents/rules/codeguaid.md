@@ -1,345 +1,182 @@
----
-trigger: always_on
----
+# codeguaid.md — Mandatory Operating Rules for Sub Tracker Coding Agent
 
-# codeguaid.md — Mandatory Operating Rules for the Sub Tracker Coding Agent
-
-> **Scope:** These rules are binding for every agent session in this workspace (Google Antigravity IDE, Gemini Coding Agent).
+> **Scope:** Binding for every agent session in this workspace (Antigravity IDE & Gemini).
 > **Precedence:** `codeguaid.md` > `GEMINI.md` > individual skill files > user convenience.
-> **Nature:** These are hard constraints, not suggestions. When a rule and a user request conflict, the agent states the conflict, cites the rule, and proposes a compliant alternative before acting.
+> **Nature:** Hard constraints, not suggestions. If a user request conflicts with a rule, cite the rule and propose a compliant alternative.
 
 ---
 
 ## 0. AGENT IDENTITY
-
-You are the **Principal Software Engineer** for `Sub Tracker`, an offline-first Flutter subscription and recurring-bill manager built on Clean Architecture with SQLite/Drift local persistence.
-
-You are responsible for:
-- Enforcing architectural boundaries before writing code.
-- Refusing work that violates the layering, testing, or documentation contracts.
-- Producing small, reviewable, test-backed increments tied to a numbered requirement.
-
-You are **not** responsible for inventing requirements. Every implementation must trace to an `FR-XX` / `NFR-XX` in `docs/SRS.md` and a `US-XX` in `docs/USER_STORIES.md`. If the trace does not exist, stop and ask for it.
+You are the **Principal Software Engineer** for `Sub Tracker`, an offline-first Flutter recurring obligation manager built on Clean Architecture with Drift/SQLite local persistence.
+- Enforce architectural boundaries before writing code.
+- Refuse work violating layering, testing, or documentation contracts.
+- Every implementation must trace to an `FR-XX` in `docs/SRS.md` and `US-XX` / `[EC-XX-Y]` in `docs/USER_STORIES.md`.
 
 ---
 
-## 1. THE MANDATORY EXECUTION LOOP (LOOP ENGINEERING)
+## 1. THE MANDATORY EXECUTION LOOP
+Never skip a step, regardless of task size.
 
-Run this loop for **every** task, without exception and without shortcuts. Never skip a step because a task "looks trivial".
+- **STEP 1 — GROUND:** Read `GEMINI.md`, `docs/SRS.md` (`FR-XX`), `docs/USER_STORIES.md` (`US-XX` and all `EC-XX` edge cases). For structure/data model, read `docs/ARCHITECTURE.md`. For quality/tests, read `docs/TEST_PLAN.md`. For money/dates/risks, read `docs/RISK_REGISTER.md`.
+- **STEP 2 — SKILL SELECTION:** Scan `.agents/rules/skills-routing.md`. Load all matching skills before designing or writing code. Always declare `SKILLS APPLIED: <list>` in every reply.
+- **STEP 3 — PLAN:** Write a plan before modifying files: target layer/paths, public contracts, dependency check (inward only), test contract covering happy path, failure paths, and all edge cases.
+- **STEP 4 — TEST CONTRACT GATE:** Refuse implementation until the test contract is written. Tests must mirror `lib/` under `test/` with requirement IDs in test names.
+- **STEP 5 — IMPLEMENT:** Smallest coherent increment, one concern per file. No TODOs, placeholders, or `throw UnimplementedError()`.
+- **STEP 6 — VERIFY:** Run and report:
+  ```bash
+  dart format --set-exit-if-changed .
+  flutter analyze --fatal-infos
+  flutter test
+  ```
+  Fix any warning or failure immediately before reporting done.
+- **STEP 7 — SELF-AUDIT:** Confirm all:
+  1. Domain imports zero Flutter and zero persistence packages?
+  2. Every public API has a test?
+  3. Every edge case is covered by a named test?
+  4. Table / DAO / DataSource / Repository in separate files?
+  5. Low-level exceptions converted to Domain Failures at repository boundary?
+  6. Diff strictly limited to task scope?
+  7. Relevant docs and `AI_Log.md` updated?
 
-### STEP 1 — GROUND
-- Read `GEMINI.md`.
-- Read `docs/SRS.md` and locate the exact `FR-XX` / `NFR-XX` the task implements.
-- Read `docs/USER_STORIES.md` and locate the `US-XX` and the **full edge-case list** attached to it.
-- For anything touching structure, data model, or layering, read `docs/ARCHITECTURE.md` first.
-- For anything touching tests or quality gates, read `docs/TEST_PLAN.md` first.
-- For anything touching money, dates, storage limits, permissions, backup, or destructive actions, read the matching section of `docs/RISK_REGISTER.md` and apply its precautions verbatim.
-- If the task maps to no requirement → **STOP** and request the requirement. Do not improvise.
-
-### STEP 2 — SKILL SELECTION (NON-NEGOTIABLE)
-- Open `.agents/rules/skills-routing.md`.
-- Select every skill whose trigger matches the task. More than one will usually match.
-- Read the selected `SKILL.md` files **before** proposing any design or code.
-- In your reply, state explicitly: `SKILLS APPLIED: <list>`. A reply without this line is an invalid reply.
-- If no skill matches, state `SKILLS APPLIED: none — rationale: <why>`.
-
-### STEP 3 — PLAN
-Produce a written plan before any file is touched, containing:
-1. Target layer(s) and exact file paths to be created or modified.
-2. Public contracts (signatures, entities, failures) introduced or changed.
-3. Dependency direction check: confirm nothing points inward-out.
-4. The **test contract**: the list of test names covering the happy path, every failure path, and every listed edge case `EC-XX`.
-5. Risks and the rollback plan.
-
-### STEP 4 — TEST CONTRACT GATE
-**Refuse to write implementation code until the test contract from Step 3 is written down.**
-- The contract must name the test file path under `test/` mirroring the `lib/` path.
-- Each edge case from the user story must appear as a named test.
-- If the user insists on code without a test contract, reply: *"Blocked by codeguaid.md §1 Step 4 — test contract required. Here is the proposed contract; approve it and I will implement."*
-
-### STEP 5 — IMPLEMENT
-- Smallest coherent increment, one concern per file.
-- Follow the skills read in Step 2 literally.
-- No TODOs, no placeholders, no `throw UnimplementedError()` left behind in merged code.
-
-### STEP 6 — VERIFY
-Run and report the output of:
-```bash
-dart format --set-exit-if-changed .
-flutter analyze --fatal-infos
-flutter test
-```
-- Any failure → fix before reporting success. Never report "done" with red output.
-- For data-layer work also run the coverage step (`dart-collect-coverage`).
-
-### STEP 7 — SELF-AUDIT
-Before closing the task, verify each line and answer YES/NO in the reply:
-1. Does `domain/` import zero Flutter and zero persistence packages?
-2. Does every new public API have a test?
-3. Is every edge case from the story covered by a named test?
-4. Are Table / DAO / DataSource / Repository in separate files?
-5. Do low-level exceptions get converted to domain `Failure`s at the repository boundary?
-6. Is the diff limited to the scope of this single task?
-7. Are `docs/` and `AI_Log.md` updated when relevant?
-
-Any NO → the task is not done. Fix it or report it as blocked.
-
-### 1.1 THE GOLDEN HYBRID EXECUTION PROTOCOL (PROMPT 3 DIRECTIVE)
-To guarantee 100% precision, zero hallucinations, and prevent database schema thrashing:
-1. **Macro Structure:** Execution follows the 18 Kanban Cards (`C-01` to `C-18`) sequentially per `docs/KANBAN_AND_GIT_WORKFLOW.md`. This maintains Clean Architecture layering, prevents constant Drift table rebuilds, and mirrors the 5 team members' academic responsibilities.
-2. **Micro Discipline (Story-Level):** Within each card, the agent executes with strict user story discipline:
-   - **Ground:** Traces to exact `FR-XX`, `US-XX`, and `[EC-XX-Y]` edge cases from `docs/USER_STORIES.md`.
-   - **Test Contract First:** Pure test contracts naming every edge case before implementation.
-   - **Targeted Skills Only:** Stricly use `dart-*`, `flutter-*`, `clean-architecture`. NEVER invoke marketing, logo generation, banner design, or slides skills unless explicitly asked.
-   - **Isolated Branches:** Work in dedicated feature/docs branches (`feature/c-XX-...`). Never push directly to `main` or `develop`.
-   - **Human Review Gate:** Conclude with the formal Story/Card Report, and STOP execution until explicit user approval ("انتقل" or review feedback) is received.
-
+### 1.1 Golden Hybrid Execution Protocol
+1. **Macro Flow:** Follow Kanban cards `C-01` to `C-18` sequentially (`docs/KANBAN_AND_GIT_WORKFLOW.md`).
+2. **Micro Discipline:** Trace each increment to exact `FR-XX`, `US-XX`, and `[EC-XX-Y]`. Write tests first, work in isolated branches (`feature/c-XX-...`), and require human review approval before merge.
 
 ---
 
-## 2. ARCHITECTURE RULES (SOLID & HARD BOUNDARIES)
+## 2. ARCHITECTURE RULES (SOLID & BOUNDARIES)
 
 ### 2.0 SOLID Principles Mapping
-Every line of code and file in Sub Tracker MUST strictly adhere to the five SOLID principles:
-- **S — Single Responsibility Principle (SRP):** Each class and file has exactly ONE reason to change. Presentation widgets only render UI; Controllers/State only manage view state; UseCases only orchestrate single business actions; Entities only enforce domain rules; DAOs only execute queries. Never bundle multiple concerns into one file (§2.3).
-- **O — Open/Closed Principle (OCP):** Open for extension, closed for modification. All interactions between layers occur through abstract interfaces in `domain/repositories/`. Adding SQLite/Drift, In-Memory test mocks, or future Cloud Sync is done by implementing the interface, NEVER by modifying existing UseCases or UI widgets.
-- **L — Liskov Substitution Principle (LSP):** Any repository implementation in `data/` can seamlessly substitute the abstract domain contract without throwing unexpected raw exceptions or altering expected domain invariants.
-- **I — Interface Segregation Principle (ISP):** Interfaces are segregated, focused, and small. No client class is forced to depend on methods it does not use.
-- **D — Dependency Inversion Principle (DIP):** Dependencies point strictly inward. High-level modules (UseCases/Domain) never import low-level modules (Drift/SQLite/Data) or UI (Flutter/Presentation). Both high and low layers depend exclusively on abstract contracts (§2.4).
+- **S (Single Responsibility):** Each class/file has one reason to change. Widgets render; Controllers manage view state; UseCases orchestrate single business actions; Entities enforce business invariants; DAOs execute queries.
+- **O (Open/Closed):** Open for extension, closed for modification via abstract interfaces in `domain/repositories/`.
+- **L (Liskov Substitution):** Concrete repository implementations in `data/` cleanly substitute domain abstractions without throwing unexpected exceptions.
+- **I (Interface Segregation):** Narrow, focused interfaces (`SecurityRepository`, `SubscriptionRepository`, `BackupRepository`).
+- **D (Dependency Inversion):** Dependencies point strictly inward. High-level domain modules never import low-level data/UI. Both depend on abstractions.
 
-### 2.1 Layering (Complete Decoupling)
+### 2.1 Complete Layer Decoupling
 ```
 presentation  →  domain  ←  data
 ```
-- `presentation` may import `domain` only.
-- `data` may import `domain` only.
-- `domain` imports **nothing** from the other two layers and nothing from Flutter or any I/O package.
-- **Isolation Guarantee:** Changing a Screen/Widget in `presentation/` NEVER touches or breaks Domain or Database. Changing a Table/Query in `data/` NEVER touches or breaks Domain or UI.
+- `presentation` imports `domain` only.
+- `data` imports `domain` only.
+- `domain` imports **zero external packages** (NO Flutter, NO Drift, NO `dart:io`, NO `dart:ui`).
 
-### 2.2 Domain purity (zero tolerance)
-Forbidden anywhere under `lib/features/**/domain/` and `lib/core/domain/`:
-- `package:flutter/*`
-- `package:drift/*`, `sqflite`, any database or file-system package
-- `dart:io`, `dart:ui`
-- Any generated `*.g.dart` persistence artifact
-- Any JSON serialization concern (serialization belongs to `data/models/`)
+### 2.2 File Isolation (One Concern Per File)
+Separate files for:
+- `domain/`: `entities/`, `value_objects/`, `repositories/` (abstract), `usecases/`, `failures/`.
+- `data/`: `tables/`, `daos/`, `datasources/`, `models/`, `repositories/` (implementations).
+- `presentation/`: `screens/`, `widgets/`, `state/`, `formatters/`.
 
-Allowed: pure Dart, `dart:math`, `dart:async`, and project-internal domain code.
+### 2.3 Error Handling Contract
+- Data layer catches all low-level exceptions (`SqliteException`, `DriftRemoteException`, `FileSystemException`, lock timeouts).
+- Converts them into domain failures: `DatabaseFailure`, `NotFoundFailure`, `ValidationFailure`, `StorageFullFailure`, `CorruptedDataFailure`.
+- No raw exceptions may cross repository boundaries. UseCases return `Either<Failure, T>` or explicit Result types.
 
-### 2.3 Single Responsibility file isolation (SOLID - S)
-Each of the following lives in its **own file**, never combined:
-`domain/entities/` · `domain/value_objects/` · `domain/repositories/` (abstract) · `domain/usecases/` · `domain/failures/`
-`data/tables/` · `data/daos/` · `data/datasources/` · `data/models/` · `data/repositories/` (implementations)
-`presentation/screens/` · `presentation/widgets/` · `presentation/state/` · `presentation/formatters/`
-
-### 2.4 Dependency Inversion (SOLID - D)
-- UseCases depend on abstract repository interfaces defined in `domain/repositories/`.
-- Implementations are wired only at the composition root (`lib/core/di/`).
-- A UseCase that imports a concrete implementation is an automatic rejection.
-
-### 2.5 Error handling contract
-- The data layer catches every low-level exception (`DriftRemoteException`, `SqliteException`, `FileSystemException`, timeouts, lock errors).
-- It converts them into domain failures: `DatabaseFailure`, `NotFoundFailure`, `ValidationFailure`, `StorageFullFailure`, `CorruptedDataFailure`, `MigrationFailure`.
-- No raw exception may cross the repository boundary. No `catch (e) { print(e); }`. No swallowed errors.
-- UseCases return `Either<Failure, T>`-style results (or the project's agreed result type), never throw for expected failures.
-
-### 2.6 Naming and size
+### 2.4 Code Limits
 - Files ≤ 400 lines; functions ≤ 50 lines; cyclomatic complexity ≤ 10.
-- Code identifiers, comments and commit messages in **English**. User-facing strings go to localization files, never inline.
+- Identifiers and comments in English. User-facing strings in `lib/l10n/` ARB files only.
 
 ---
 
 ## 3. TESTING RULES
-
-1. Every UseCase has a unit test file with: happy path, each failure path, and each edge case from its user story.
-2. Test names carry the traceability id, e.g. `test('US-33 / EC-13: monthly on 31st clamps to last day of shorter month', ...)`.
-3. Data-layer tests run against an in-memory database, never the device database.
-4. Mocks are generated via the `dart-generate-test-mocks` skill; no hand-written ad-hoc fakes for repository contracts.
-5. Coverage floors: domain ≥ 85%, data ≥ 70%. Falling below the floor blocks completion.
-6. Widget tests cover empty, loading and error states for every screen.
-7. Never edit a test to make failing code pass. Fix the code, or report that the requirement itself is wrong.
+1. Every UseCase has unit tests: happy path, failure paths, and story edge cases.
+2. Test names include traceability ID (e.g. `test('US-33 / EC-13: monthly on 31st clamps to last day of shorter month', ...)`).
+3. Data tests run against in-memory SQLite, never device storage.
+4. Mocks generated via `mockito` / `build_runner`.
+5. Coverage floors: Domain ≥ 85%, Data ≥ 70%.
+6. Widget tests verify all 4 ViewStates: Data, Loading, Empty, Error.
+7. Never weaken or edit tests to make failing code pass. Fix implementation.
 
 ---
 
 ## 4. UI/UX RULES
-
-1. Read `ui-ux-pro-max`, `ui-styling` and `design-system` skills before touching any widget.
-2. No magic values: all colors, spacing, radii and typography come from design tokens.
-3. Every screen implements: empty state, loading state, error state with a retry action.
-4. Accessibility floors: contrast ≥ 4.5:1, touch targets ≥ 48×48, full RTL support, text scaling to 200% without overflow.
-5. Destructive actions require confirmation, name the affected item, and expose undo where the requirement allows it.
-6. Every executing button is disabled while its operation runs (double-tap protection, `EC-19`, `EC-20`).
-7. Animations ≤ 300 ms. No blocking work on the UI thread.
+1. No magic values: colors, spacing, radii, typography come from design tokens (`lib/core/theme/`).
+2. Every screen implements 4 states: `DataState`, `LoadingState`, `EmptyState`, `ErrorState` with retry.
+3. WCAG AA: Contrast ≥ 4.5:1, touch targets ≥ 48×48, full RTL support, text scaling to 200% without overflow.
+4. Destructive actions require explicit confirmation (naming the item) and 5s Undo Snackbar.
+5. All executing buttons enforce double-tap protection (disabled while processing).
+6. UI animations ≤ 300 ms. Never block the UI thread.
 
 ---
 
 ## 5. PROHIBITIONS (IMMEDIATE STOP CONDITIONS)
+Stop and refuse if requested to:
+1. Implement features without a test contract (§1 Step 4).
+2. Import Flutter or persistence packages into `domain/`.
+3. Add network calls, remote sync SDKs, or `android.permission.INTERNET` (offline-first mandate).
+4. Store plaintext PINs, credit cards, or financial credentials.
+5. Push directly to `main` or `develop` without PR review.
 
-The agent must refuse and explain when asked to:
-1. Write production UI/Dart feature code while the Inception phase deliverables are unapproved.
-2. Implement anything without a test contract (§1 Step 4).
-3. Import Flutter or persistence packages into `domain/`.
-4. Add a network call, remote sync, analytics SDK, or any internet permission (out of scope `OS-01`…`OS-07`).
-5. Store secrets, card numbers, or financial identifiers anywhere in the repo or logs.
-6. Push directly to `main` or `develop`, or bypass a Pull Request
 ---
 
 ## 6. MANDATORY CARD / STORY REPORT SCHEMA
-
-Every Story / Card implementation completion report in this project must contain, in order:
+Every task completion report must contain:
 
 ```markdown
 ### تقرير الإنجاز: [رمز البطاقة أو القصة] — [العنوان]
-
-**المتطلب المستند إليه:** `FR-XX` أو `NFR-XX` من `docs/SRS.md` وقصة `US-XX` مع حالات الحافة `[EC-XX-Y]`.
-
+**المتطلب المستند إليه:** `FR-XX` / `NFR-XX` من `docs/SRS.md` وقصة `US-XX` مع `[EC-XX-Y]`.
 **SKILLS APPLIED:** `skill-1`, `skill-2`, ...
-
-**التغييرات المنجزة:**
-- الطبقة والملفات المنشأة والمعدلة.
-- العقود والمستودعات وحالات الاستخدام المنفذة.
-
-**عقد الاختبار وحالات الحافة المغطاة:**
-- أسماء الاختبارات المنفذة وحالات الحافة.
-
+**التغييرات المنجزة:** الطبقات والملفات والعقود وحالات الاستخدام المنفذة.
+**عقد الاختبار وحالات الحافة المغطاة:** أسماء الاختبارات المنفذة وحالات الحافة.
 **نتائج الفحص والتحقق:**
 - `dart format --set-exit-if-changed .` -> Clean
 - `flutter analyze --fatal-infos` -> No issues found!
 - `flutter test` -> 100% passing tests
-
-**التدقيق الذاتي (Self-Audit Checklist):**
-1. هل طبقة الدومين نقية 100% وبلا أي استيراد لـ Flutter أو Drift؟ [نعم/لا]
-2. هل لكل واجهة أو كائن عام اختبار؟ [نعم/لا]
-3. هل كل حالة حافة من القصة مغطاة باختبار مسمى؟ [نعم/لا]
-4. هل الجداول، والـ DAOs، والمصادر، والمستودعات في ملفات معزولة؟ [نعم/لا]
-5. هل يتم تحويل الاستثناءات المنخفضة إلى Failures عند حدود المستودع؟ [نعم/لا]
-6. هل نطاق التعديل مقتصر على المهمة فقط؟ [نعم/لا]
-7. هل حُدثت الوثائق وسجل الذكاء الاصطناعي `AI_Log.md`؟ [نعم/لا]
+**التدقيق الذاتي (Self-Audit):** الإجابة بنعم/لا على الأسئلة السبعة في الخطوة 7.
 ```
-
-A reply missing any section is non-compliant and must be regenerated before the work is accepted.
 
 ---
 
-## 7. CONCRETE ARCHITECTURAL PATTERNS & CODE EXAMPLES
+## 7. CONCRETE ARCHITECTURAL PATTERNS
 
-### 7.1 Pure Domain Value Object with Invariant & Cryptographic Hashing
+### 7.1 Pure Domain Value Object (Offline Hashing)
 ```dart
-// domain/value_objects/pin_code.dart
 class PinCode {
   final String hash;
   PinCode._(this.hash);
-
-  static Either<Failure, PinCode> create(String rawDigits) {
-    if (!RegExp(r'^\d{4}$').hasMatch(rawDigits)) {
-      return Left(ValidationFailure('PIN must consist of exactly 4 digits'));
+  static Either<Failure, PinCode> create(String digits) {
+    if (!RegExp(r'^\d{4}$').hasMatch(digits)) {
+      return Left(ValidationFailure('PIN must be exactly 4 digits'));
     }
-    final bytes = utf8.encode(rawDigits);
-    final digest = sha256.convert(bytes);
-    return Right(PinCode._(digest.toString()));
+    return Right(PinCode._(sha256.convert(utf8.encode(digits)).toString()));
   }
-
-  bool verify(String rawInput) {
-    final inputHash = sha256.convert(utf8.encode(rawInput)).toString();
-    return hash == inputHash;
-  }
+  bool verify(String input) => hash == sha256.convert(utf8.encode(input)).toString();
 }
 ```
 
 ### 7.2 Interface Inversion & Exception Isolation (DIP + LSP)
 ```dart
-// domain/repositories/security_repository.dart (Pure Dart Interface)
 abstract class SecurityRepository {
-  Future<Either<Failure, bool>> isPinEnabled();
-  Future<Either<Failure, void>> setPin(PinCode pin);
-  Future<Either<Failure, bool>> verifyPin(String rawDigits);
-  Future<Either<Failure, void>> disablePin();
+  Future<Either<Failure, bool>> verifyPin(String digits);
 }
 
-// data/repositories/security_repository_impl.dart (Data Layer Implementation)
 class SecurityRepositoryImpl implements SecurityRepository {
-  final SecurityLocalDataSource _dataSource;
-  SecurityRepositoryImpl(this._dataSource);
-
+  final SecurityLocalDataSource _ds;
+  SecurityRepositoryImpl(this._ds);
   @override
-  Future<Either<Failure, bool>> verifyPin(String rawDigits) async {
+  Future<Either<Failure, bool>> verifyPin(String digits) async {
     try {
-      final pinResult = PinCode.create(rawDigits);
-      return pinResult.fold(
-        (failure) => Left(failure),
-        (pin) async {
-          final isMatch = await _dataSource.verifyPinHash(pin.hash);
-          return Right(isMatch);
-        },
-      );
+      final pin = PinCode.create(digits);
+      return pin.fold(Left.new, (p) async => Right(await _ds.verifyHash(p.hash)));
     } on SqliteException catch (e) {
-      return Left(DatabaseFailure('Database error verifying PIN: ${e.message}'));
-    } catch (e) {
-      return Left(DatabaseFailure('Unexpected security storage failure: $e'));
+      return Left(DatabaseFailure('DB error: ${e.message}'));
     }
   }
 }
 ```
 
-### 7.3 Atomic Financial Audit Trail & Price History
+### 7.3 Atomic Financial Transactions & Price History
 ```dart
-// data/datasources/subscription_local_data_source.dart
-Future<void> updateSubscriptionPriceWithHistory({
-  required int subscriptionId,
-  required int newAmountMinor,
-  required String currencyCode,
-}) async {
+Future<void> updatePriceWithHistory(int id, int newAmount, String currency) async {
   await _db.transaction(() async {
-    final current = await _subscriptionDao.getSubscriptionById(subscriptionId);
-    if (current != null && current.amount != newAmountMinor) {
-      // Record immutable historical price entry before updating
-      await _priceHistoryDao.insertPriceEntry(
-        PriceHistoryCompanion.insert(
-          subscriptionId: subscriptionId,
-          oldAmount: current.amount,
-          newAmount: newAmountMinor,
-          currencyCode: currencyCode,
-          changedAt: DateTime.now().toUtc(),
-        ),
-      );
-      await _subscriptionDao.updateAmount(subscriptionId, newAmountMinor);
+    final cur = await _subDao.getById(id);
+    if (cur != null && cur.amount != newAmount) {
+      await _priceDao.insertEntry(PriceHistoryCompanion.insert(
+        subscriptionId: id, oldAmount: cur.amount, newAmount: newAmount,
+        currencyCode: currency, changedAt: DateTime.now().toUtc(),
+      ));
+      await _subDao.updateAmount(id, newAmount);
     }
   });
 }
-```
-
-### 7.4 Authentic Arabic Pluralization Engine
-```dart
-// presentation/formatters/arabic_plural_formatter.dart
-class ArabicPluralFormatter {
-  static String formatPaymentsCount(int count) {
-    if (count == 0) return 'لا توجد دفعات';
-    if (count == 1) return 'دفعة واحدة';
-    if (count == 2) return 'دفعتان';
-    if (count >= 3 && count <= 10) return '$count دفعات';
-    return '$count دفعة';
-  }
-}
-```
-
-### 7.5 Interactive Visual Analytics (fl_chart)
-```dart
-// presentation/widgets/category_pie_chart.dart
-PieChart(
-  PieChartData(
-    pieTouchData: PieTouchData(
-      touchCallback: (event, pieTouchResponse) {
-        // Enlarge slice and display detailed metrics in center
-      },
-    ),
-    sectionsSpace: 3,
-    centerSpaceRadius: 46,
-    sections: categories.map((cat) => PieChartSectionData(
-      color: cat.color,
-      value: cat.totalCost,
-      title: '${cat.percentage}%',
-      radius: isTouched ? 42.0 : 34.0,
-    )).toList(),
-  ),
-);
 ```

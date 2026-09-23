@@ -37,7 +37,7 @@ git push -u origin develop
 1. **Settings** ← **Collaborators and teams** ← **Add people**.
 2. أضف: أواب النزيلي، مشعل حاجب، محمد العيدروس، محمد العواضي.
 3. **الصلاحية:** `Write` للجميع — **لا تمنح أحداً `Admin`**، فذلك يسمح بتجاوز الحماية.
-4. عيّن **محمد العواضي** كمراجع افتراضي عبر ملف `CODEOWNERS` (المرحلة 6).
+4. عيّن **قحطان الشاجع** كمراجع عام ورئيسي لكل أجزاء المستودع عبر ملف `CODEOWNERS` (المرحلة 6).
 
 ## المرحلة 4 — ضبط الفرع الافتراضي
 
@@ -85,28 +85,29 @@ git reset --hard origin/main
 
 ## المرحلة 6 — ملف CODEOWNERS
 
-أنشئ الملف `.github/CODEOWNERS` بالمحتوى التالي (مع استبدال المعرّفات بمعرّفات GitHub الحقيقية):
+أنشئ الملف `.github/CODEOWNERS` بالصيغة المعتمدة للمشروع:
 
 ```
 # المراجعة الافتراضية لكل شيء
-*                                   @qahtan @awab-qa
+*                                   @QahtanAlshagea
 
-# الدومين والعقود
-/lib/features/*/domain/             @awab
+# الدومين والعقود — مسؤولية محمد العيدروس
+/lib/features/*/domain/             @Eng-Mohammed-Al-aidrous @QahtanAlshagea
 
-# التخزين المحلي
-/lib/features/*/data/               @mishal
+# التخزين المحلي وقواعد البيانات — مسؤولية محمد العواضي
+/lib/features/*/data/               @dragongold2022-design @QahtanAlshagea
 
-# الواجهات وتجربة المستخدم
-/lib/features/*/presentation/       @mohammed-aidroos
+# الواجهات وتجربة المستخدم — مسؤولية أواب النزيلي
+/lib/features/*/presentation/       @AWNO-1 @QahtanAlshagea
+/lib/features/*/ui/                 @AWNO-1 @QahtanAlshagea
 
-# الاختبارات
-/test/                              @mohammed-alawadhi
+# منظومة الاختبارات وضمان الجودة — مسؤولية مشعل حاجب
+/test/                              @mshalhajep @QahtanAlshagea
 
-# الحوكمة والمعمارية وملفات الوكيل
-/docs/                              @qahtan
-/.agents/                           @qahtan
-/GEMINI.md                          @qahtan
+# الحوكمة والمعمارية وملفات الوكيل — مسؤولية قحطان الشاجع
+/docs/                              @QahtanAlshagea
+/.agents/                           @QahtanAlshagea
+/GEMINI.md                          @QahtanAlshagea
 ```
 
 ## المرحلة 7 — إنشاء لوحة المشروع وربط المهام
