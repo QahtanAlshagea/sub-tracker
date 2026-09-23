@@ -235,5 +235,35 @@ void main() {
       final size = tester.getSize(targetFinder);
       expect(size.height, greaterThanOrEqualTo(48.0));
     });
+
+    testWidgets(
+      '7. Reminder controls: toggles reminders and allows lead days selection',
+      (tester) async {
+        await tester.pumpWidget(createWidget());
+        await tester.pumpAndSettle();
+
+        await tester.drag(
+          find.byType(SingleChildScrollView).first,
+          const Offset(0, -300),
+        );
+        await tester.pumpAndSettle();
+
+        final reminderSwitch = find.byKey(
+          const Key('add_edit_reminder_switch'),
+        );
+        expect(reminderSwitch, findsOneWidget);
+
+        // Toggling switch off hides lead days chips
+        await tester.tap(reminderSwitch);
+        await tester.pumpAndSettle();
+        expect(find.text('تنبيهي قبل موعد الفاتورة بـ:'), findsNothing);
+
+        // Toggling switch on displays lead days chips
+        await tester.tap(reminderSwitch);
+        await tester.pumpAndSettle();
+        expect(find.text('تنبيهي قبل موعد الفاتورة بـ:'), findsOneWidget);
+        expect(find.text('يومين'), findsOneWidget);
+      },
+    );
   });
 }

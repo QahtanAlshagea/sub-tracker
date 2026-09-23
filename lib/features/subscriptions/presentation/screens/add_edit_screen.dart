@@ -4,8 +4,11 @@ import '../../../../core/theme/accessibility/accessibility_widgets.dart';
 import '../../../../core/theme/tokens/app_colors.dart';
 import '../../../../core/theme/tokens/app_radii.dart';
 import '../../../../core/theme/tokens/app_spacing.dart';
+import '../../../../core/theme/widgets/app_background.dart';
 import '../../../../core/utils/app_haptics.dart';
 import '../../domain/value_objects/billing_cycle.dart';
+import '../../domain/value_objects/obligation_type.dart';
+import '../formatters/currency_icon_resolver.dart';
 import '../formatters/date_formatter.dart';
 import '../state/add_edit_subscription_controller.dart';
 import '../state/view_state.dart';
@@ -199,7 +202,7 @@ class _AddEditSubscriptionScreenState extends State<AddEditSubscriptionScreen> {
                       : (l10n?.addSubscription ?? 'إضافة اشتراك جديد'),
                 ),
               ),
-              body: _buildForm(context, formState, l10n),
+              body: AppBackground(child: _buildForm(context, formState, l10n)),
               bottomNavigationBar: _buildBottomBar(context, formState, l10n),
             ),
           ),
@@ -214,6 +217,7 @@ class _AddEditSubscriptionScreenState extends State<AddEditSubscriptionScreen> {
     AppLocalizations? l10n,
   ) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -240,6 +244,49 @@ class _AddEditSubscriptionScreenState extends State<AddEditSubscriptionScreen> {
                 ),
                 const SizedBox(height: AppSpacing.md),
               ],
+
+              // Obligation Type Selector
+              Text(
+                'نوع الالتزام / الدفعة',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: SegmentedButton<ObligationType>(
+                  key: const Key('add_edit_obligation_type_segmented_button'),
+                  showSelectedIcon: false,
+                  segments: const [
+                    ButtonSegment(
+                      value: ObligationType.subscription,
+                      label: Text('اشتراك'),
+                      icon: Icon(Icons.subscriptions_outlined, size: 18),
+                    ),
+                    ButtonSegment(
+                      value: ObligationType.bill,
+                      label: Text('فاتورة'),
+                      icon: Icon(Icons.receipt_long_outlined, size: 18),
+                    ),
+                    ButtonSegment(
+                      value: ObligationType.rent,
+                      label: Text('إيجار'),
+                      icon: Icon(Icons.home_outlined, size: 18),
+                    ),
+                    ButtonSegment(
+                      value: ObligationType.other,
+                      label: Text('أخرى'),
+                      icon: Icon(Icons.more_horiz, size: 18),
+                    ),
+                  ],
+                  selected: {formState.obligationType},
+                  onSelectionChanged: (selected) {
+                    widget.controller.updateObligationType(selected.first);
+                  },
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
 
               // Name field
               TextFormField(
@@ -274,7 +321,10 @@ class _AddEditSubscriptionScreenState extends State<AddEditSubscriptionScreen> {
                       decoration: InputDecoration(
                         labelText: l10n?.subscriptionPrice ?? 'المبلغ / القيمة',
                         hintText: '0.00',
-                        prefixIcon: const Icon(Icons.attach_money),
+                        prefixIcon: CurrencyIconResolver.buildCurrencyPrefix(
+                          formState.currency,
+                          color: theme.colorScheme.primary,
+                        ),
                         errorText: formState.priceError,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(AppRadii.md),
@@ -350,9 +400,9 @@ class _AddEditSubscriptionScreenState extends State<AddEditSubscriptionScreen> {
                       value: CycleType.weekly,
                       label: Text(l10n?.weekly ?? 'أسبوعياً'),
                     ),
-                    ButtonSegment(
+                    const ButtonSegment(
                       value: CycleType.custom,
-                      label: Text(l10n?.customCycle ?? 'مخصص'),
+                      label: Text('مخصص'),
                     ),
                   ],
                   selected: {formState.cycle.type},
@@ -463,11 +513,29 @@ class _AddEditSubscriptionScreenState extends State<AddEditSubscriptionScreen> {
               const SizedBox(height: AppSpacing.md),
 
               // Category Dropdown
-              Text(
-                l10n?.category ?? 'الفئة',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    l10n?.category ?? 'الفئة',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  TextButton.icon(
+                    key: const Key('add_edit_new_category_button'),
+                    onPressed: _showAddCategoryDialog,
+                    icon: const Icon(Icons.add_circle_outline, size: 18),
+                    label: const Text('فئة جديدة'),
+                    style: TextButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.sm,
+                        vertical: 2,
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: AppSpacing.xs),
               DropdownButtonFormField<String>(
@@ -488,7 +556,24 @@ class _AddEditSubscriptionScreenState extends State<AddEditSubscriptionScreen> {
                   ),
                 ),
                 items: formState.availableCategories.map((cat) {
-                  return DropdownMenuItem(value: cat.id, child: Text(cat.name));
+                  return DropdownMenuItem(
+                    value: cat.id,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 12,
+                          height: 12,
+                          decoration: BoxDecoration(
+                            color: Color(cat.colorValue),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        Text(cat.name),
+                      ],
+                    ),
+                  );
                 }).toList(),
                 onChanged: (val) {
                   if (val != null) widget.controller.updateCategory(val);
@@ -526,6 +611,115 @@ class _AddEditSubscriptionScreenState extends State<AddEditSubscriptionScreen> {
                   ),
                 ),
                 onChanged: widget.controller.updateNotes,
+              ),
+              const SizedBox(height: AppSpacing.md),
+
+              // Reminders & Local Notifications Card (FR-10, US-26)
+              Card(
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: AppRadii.cardRadius,
+                  side: BorderSide(
+                    color: isDark
+                        ? AppColors.darkBorder
+                        : AppColors.lightBorder,
+                  ),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SwitchListTile.adaptive(
+                        key: const Key('add_edit_reminder_switch'),
+                        contentPadding: EdgeInsets.zero,
+                        secondary: const Icon(
+                          Icons.notifications_active_outlined,
+                          color: AppColors.indigo500,
+                          size: 20,
+                        ),
+                        title: const Text(
+                          'تنبيهات الاستحقاق',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: const Text(
+                          'تلقي إشعار محلي على الجهاز قبل موعد الفاتورة',
+                        ),
+                        value: formState.reminderEnabled,
+                        onChanged: widget.controller.updateReminderEnabled,
+                      ),
+                      if (formState.reminderEnabled) ...[
+                        const Divider(height: AppSpacing.md),
+                        Text(
+                          'تنبيهي قبل موعد الفاتورة بـ:',
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                        Wrap(
+                          spacing: AppSpacing.sm,
+                          children: [1, 2, 3, 7].map((days) {
+                            final isSelected =
+                                formState.reminderLeadDays == days;
+                            return ChoiceChip(
+                              label: Text(
+                                days == 1
+                                    ? 'يوم واحد'
+                                    : days == 2
+                                    ? 'يومين'
+                                    : '$days أيام',
+                              ),
+                              selected: isSelected,
+                              onSelected: (selected) {
+                                if (selected) {
+                                  AppHaptics.selectionClick();
+                                  widget.controller.updateReminderLeadDays(
+                                    days,
+                                  );
+                                }
+                              },
+                            );
+                          }).toList(),
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('وقت التنبيه:'),
+                            OutlinedButton.icon(
+                              icon: const Icon(
+                                Icons.access_time_rounded,
+                                size: 18,
+                              ),
+                              label: Text(
+                                '${formState.reminderTimeHour.toString().padLeft(2, '0')}:${formState.reminderTimeMinute.toString().padLeft(2, '0')}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              onPressed: () async {
+                                final time = await showTimePicker(
+                                  context: context,
+                                  initialTime: TimeOfDay(
+                                    hour: formState.reminderTimeHour,
+                                    minute: formState.reminderTimeMinute,
+                                  ),
+                                );
+                                if (time != null) {
+                                  widget.controller.updateReminderTime(
+                                    time.hour,
+                                    time.minute,
+                                  );
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
               ),
               const SizedBox(height: AppSpacing.xl),
             ],
@@ -604,11 +798,13 @@ class _AddEditSubscriptionScreenState extends State<AddEditSubscriptionScreen> {
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
         child: Center(
+          heightFactor: 1.0,
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 600),
             child: MinTouchTarget(
               child: SizedBox(
                 width: double.infinity,
+                height: 50,
                 child: FilledButton(
                   key: const Key('add_edit_save_button'),
                   onPressed: formState.isSubmitting
@@ -635,5 +831,152 @@ class _AddEditSubscriptionScreenState extends State<AddEditSubscriptionScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _showAddCategoryDialog() async {
+    final nameController = TextEditingController();
+    int selectedColor = 0xFF8B5CF6;
+    final formKey = GlobalKey<FormState>();
+
+    const colors = [
+      0xFF8B5CF6, // Violet
+      0xFF3B82F6, // Blue
+      0xFF10B981, // Emerald
+      0xFFF59E0B, // Amber
+      0xFFEF4444, // Red
+      0xFFEC4899, // Pink
+      0xFF06B6D4, // Cyan
+      0xFF84CC16, // Lime
+    ];
+
+    final created = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (dialogCtx, setDialogState) {
+          return AlertDialog(
+            title: const Row(
+              children: [
+                Icon(Icons.category_rounded, color: AppColors.indigo500),
+                SizedBox(width: AppSpacing.sm),
+                Text('إضافة فئة جديدة'),
+              ],
+            ),
+            content: Form(
+              key: formKey,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    TextFormField(
+                      controller: nameController,
+                      autofocus: true,
+                      decoration: InputDecoration(
+                        labelText: 'اسم الفئة',
+                        hintText: 'مثال: ألعاب، اتصالات، طعام...',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadii.md),
+                        ),
+                      ),
+                      validator: (val) {
+                        if (val == null || val.trim().isEmpty) {
+                          return 'يرجى إدخال اسم الفئة';
+                        }
+                        if (val.trim().length > 24) {
+                          return 'اسم الفئة يجب ألا يتجاوز 24 حرفاً';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    const Text(
+                      'لون الفئة:',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: colors.map((col) {
+                        final isSelected = selectedColor == col;
+                        return GestureDetector(
+                          onTap: () =>
+                              setDialogState(() => selectedColor = col),
+                          child: Container(
+                            width: 34,
+                            height: 34,
+                            decoration: BoxDecoration(
+                              color: Color(col),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: isSelected
+                                    ? Colors.white
+                                    : Colors.transparent,
+                                width: 2.5,
+                              ),
+                              boxShadow: isSelected
+                                  ? [
+                                      BoxShadow(
+                                        color: Color(
+                                          col,
+                                        ).withValues(alpha: 0.5),
+                                        blurRadius: 6,
+                                        spreadRadius: 2,
+                                      ),
+                                    ]
+                                  : null,
+                            ),
+                            child: isSelected
+                                ? const Icon(
+                                    Icons.check,
+                                    size: 18,
+                                    color: Colors.white,
+                                  )
+                                : null,
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('إلغاء'),
+              ),
+              FilledButton(
+                onPressed: () async {
+                  if (formKey.currentState?.validate() ?? false) {
+                    final cat = await widget.controller.createNewCategory(
+                      name: nameController.text.trim(),
+                      colorValue: selectedColor,
+                    );
+                    if (cat != null && ctx.mounted) {
+                      Navigator.of(ctx).pop(true);
+                    }
+                  }
+                },
+                child: const Text('إضافة'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    if (created == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('تمت إضافة الفئة بنجاح واختيارها تلقائياً'),
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
   }
 }

@@ -1,3 +1,5 @@
+import 'package:uuid/uuid.dart';
+import '../../../../core/database/app_database.dart';
 import '../daos/subscription_dao.dart';
 import '../models/subscription_model.dart';
 
@@ -60,8 +62,27 @@ class SubscriptionLocalDataSourceImpl implements SubscriptionLocalDataSource {
 
   @override
   Future<SubscriptionModel> updateSubscription(SubscriptionModel model) async {
-    final companion = model.toCompanion();
-    await _subscriptionDao.updateSubscription(companion);
+    final existing = await _subscriptionDao.getSubscriptionById(model.id);
+    if (existing != null &&
+        (existing.priceMinorUnits != model.priceMinorUnits ||
+            existing.currencyCode != model.currencyCode)) {
+      // Record old price in PriceHistory automatically
+      final historyCompanion = PriceHistoryCompanion.insert(
+        id: const Uuid().v4(),
+        subscriptionId: model.id,
+        oldPriceMinorUnits: existing.priceMinorUnits,
+        newPriceMinorUnits: model.priceMinorUnits,
+        currencyCode: model.currencyCode,
+        changedAt: DateTime.now().toUtc(),
+      );
+      await _subscriptionDao.updateSubscriptionPriceWithHistory(
+        subscriptionCompanion: model.toCompanion(),
+        priceHistoryCompanion: historyCompanion,
+      );
+    } else {
+      final companion = model.toCompanion();
+      await _subscriptionDao.updateSubscription(companion);
+    }
     final updated = await _subscriptionDao.getSubscriptionById(model.id);
     return SubscriptionModel.fromData(updated!);
   }

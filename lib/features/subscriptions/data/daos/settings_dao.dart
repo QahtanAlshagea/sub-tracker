@@ -71,4 +71,17 @@ class SettingsDao extends DatabaseAccessor<AppDatabase>
       ),
     );
   }
+
+  /// Updates PIN lock state and cryptographic hash.
+  Future<int> updatePinSecurity({required bool isPinEnabled, String? pinHash}) {
+    return (update(
+      settings,
+    )..where((tbl) => tbl.id.equals(kDefaultSettingsId))).write(
+      SettingsCompanion(
+        isPinEnabled: Value(isPinEnabled),
+        pinHash: Value(pinHash),
+        updatedAt: Value(DateTime.now().toUtc()),
+      ),
+    );
+  }
 }

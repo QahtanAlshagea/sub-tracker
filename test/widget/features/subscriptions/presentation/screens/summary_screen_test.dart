@@ -22,7 +22,9 @@ import 'package:sub_tracker/features/subscriptions/presentation/widgets/app_empt
 import 'package:sub_tracker/features/subscriptions/presentation/widgets/app_error_view.dart';
 import 'package:sub_tracker/features/subscriptions/presentation/widgets/app_loading_view.dart';
 import 'package:sub_tracker/features/subscriptions/presentation/widgets/category_distribution_bar.dart';
+import 'package:sub_tracker/features/subscriptions/presentation/widgets/category_pie_chart.dart';
 import 'package:sub_tracker/features/subscriptions/presentation/widgets/metric_card.dart';
+import 'package:sub_tracker/features/subscriptions/presentation/widgets/monthly_comparison_chart.dart';
 
 // Fake UseCases
 class FakeGetMonthlySummaryUseCase implements GetMonthlySummaryUseCase {
@@ -261,11 +263,25 @@ void main() {
         expect(find.text('الاشتراك الأعلى كلفة'), findsOneWidget);
         expect(find.text('Netflix Premium'), findsOneWidget);
 
-        // Category Distribution
+        // Category Distribution & Charts
         expect(find.text('توزيع الإنفاق حسب الفئات'), findsOneWidget);
+        expect(find.byType(CategoryPieChart), findsOneWidget);
+        expect(find.byType(MonthlyComparisonChart), findsOneWidget);
         expect(find.byType(CategoryDistributionBar), findsNWidgets(2));
-        expect(find.text('ترفيه'), findsOneWidget);
-        expect(find.text('عمل'), findsOneWidget);
+        expect(
+          find.descendant(
+            of: find.byType(CategoryDistributionBar),
+            matching: find.text('ترفيه'),
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(
+            of: find.byType(CategoryDistributionBar),
+            matching: find.text('عمل'),
+          ),
+          findsOneWidget,
+        );
       },
     );
 

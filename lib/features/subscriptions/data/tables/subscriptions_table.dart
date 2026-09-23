@@ -47,7 +47,12 @@ class Subscriptions extends Table {
       .named('category_id')
       .references(Categories, #id, onDelete: KeyAction.restrict)();
 
-  /// Lifecycle status ('active', 'archived', 'in_trash').
+  /// Nature/classification of the obligation ('subscription', 'bill', 'rent', 'other').
+  TextColumn get obligationType => text()
+      .named('obligation_type')
+      .withDefault(const Constant('subscription'))();
+
+  /// Lifecycle status ('active', 'archived', 'in_trash', 'overdue').
   TextColumn get status => text().withDefault(const Constant('active'))();
 
   /// Flag indicating if the subscription is currently a free trial.

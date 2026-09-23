@@ -3,13 +3,19 @@ import '../../../../core/utils/result.dart';
 import '../entities/subscription.dart';
 import '../failures/subscription_failures.dart';
 import '../repositories/subscription_repository.dart';
+import '../value_objects/due_date.dart';
 
 /// Parameters for renewing a subscription.
 class RenewSubscriptionParams {
   final String subscriptionId;
   final DateTime? at;
+  final DueDate? nextDueDate;
 
-  const RenewSubscriptionParams({required this.subscriptionId, this.at});
+  const RenewSubscriptionParams({
+    required this.subscriptionId,
+    this.at,
+    this.nextDueDate,
+  });
 }
 
 /// Use case for marking a subscription as paid/renewed and advancing its due date.
@@ -34,7 +40,12 @@ class RenewSubscriptionUseCase
       return Error(SubscriptionStateTransitionFailure.cannotRenewInactive());
     }
 
-    final renewed = subscription.markAsRenewed(at: params.at);
+    final renewed = params.nextDueDate != null
+        ? subscription.copyWith(
+            dueDate: params.nextDueDate,
+            updatedAt: (params.at ?? DateTime.now()).toUtc(),
+          )
+        : subscription.markAsRenewed(at: params.at);
     return _repository.updateSubscription(renewed);
   }
 }

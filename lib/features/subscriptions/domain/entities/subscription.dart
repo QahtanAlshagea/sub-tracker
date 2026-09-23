@@ -2,6 +2,7 @@ import 'package:sub_tracker/core/error/failures.dart';
 import 'package:sub_tracker/features/subscriptions/domain/value_objects/billing_cycle.dart';
 import 'package:sub_tracker/features/subscriptions/domain/value_objects/due_date.dart';
 import 'package:sub_tracker/features/subscriptions/domain/value_objects/money.dart';
+import 'package:sub_tracker/features/subscriptions/domain/value_objects/obligation_type.dart';
 import 'package:sub_tracker/features/subscriptions/domain/value_objects/subscription_status.dart';
 
 /// Central domain entity representing a subscription or recurring bill.
@@ -30,7 +31,10 @@ class Subscription {
   /// Associated category identifier.
   final String categoryId;
 
-  /// Current lifecycle state (active, archived, inTrash).
+  /// Nature/classification of the obligation (subscription, bill, rent, other).
+  final ObligationType obligationType;
+
+  /// Current lifecycle state (active, archived, inTrash, overdue).
   final SubscriptionStatus status;
 
   /// Whether this subscription is a free trial.
@@ -77,6 +81,7 @@ class Subscription {
     required this.dueDate,
     required this.startDate,
     required this.categoryId,
+    this.obligationType = ObligationType.subscription,
     this.status = SubscriptionStatus.active,
     this.isTrial = false,
     this.notes,
@@ -101,6 +106,7 @@ class Subscription {
     required DueDate dueDate,
     required DateTime startDate,
     required String categoryId,
+    ObligationType obligationType = ObligationType.subscription,
     SubscriptionStatus status = SubscriptionStatus.active,
     bool isTrial = false,
     String? notes,
@@ -172,6 +178,7 @@ class Subscription {
       dueDate: dueDate,
       startDate: startDate.toUtc(),
       categoryId: categoryId,
+      obligationType: obligationType,
       status: status,
       isTrial: isTrial,
       notes: notes?.trim(),
@@ -191,6 +198,9 @@ class Subscription {
   bool get isActive => status == SubscriptionStatus.active;
   bool get isArchived => status == SubscriptionStatus.archived;
   bool get isInTrash => status == SubscriptionStatus.inTrash;
+  bool get isOverdue =>
+      status == SubscriptionStatus.overdue ||
+      (isActive && dueDate.dateTime.isBefore(DateTime.now()));
 
   /// Convenience getter for the original anchor day preserved in [dueDate].
   int get originalAnchorDay => dueDate.originalAnchorDay;
@@ -287,6 +297,7 @@ class Subscription {
     DueDate? dueDate,
     DateTime? startDate,
     String? categoryId,
+    ObligationType? obligationType,
     SubscriptionStatus? status,
     bool? isTrial,
     String? notes,
@@ -311,6 +322,7 @@ class Subscription {
       dueDate: dueDate ?? this.dueDate,
       startDate: startDate ?? this.startDate,
       categoryId: categoryId ?? this.categoryId,
+      obligationType: obligationType ?? this.obligationType,
       status: status ?? this.status,
       isTrial: isTrial ?? this.isTrial,
       notes: notes != null ? notes.trim() : this.notes,
@@ -341,6 +353,7 @@ class Subscription {
           dueDate == other.dueDate &&
           startDate.isAtSameMomentAs(other.startDate) &&
           categoryId == other.categoryId &&
+          obligationType == other.obligationType &&
           status == other.status &&
           isTrial == other.isTrial;
 
@@ -353,6 +366,7 @@ class Subscription {
       dueDate.hashCode ^
       startDate.hashCode ^
       categoryId.hashCode ^
+      obligationType.hashCode ^
       status.hashCode ^
       isTrial.hashCode;
 

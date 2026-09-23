@@ -101,7 +101,7 @@ abstract class AppLocalizations {
   /// عنوان التطبيق الرئيسي
   ///
   /// In ar, this message translates to:
-  /// **'متتبع الاشتراكات'**
+  /// **'متتبع الدفعات الدورية'**
   String get appTitle;
 
   /// تبويب قائمة الاشتراكات

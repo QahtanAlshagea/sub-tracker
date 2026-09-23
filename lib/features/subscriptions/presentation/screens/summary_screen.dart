@@ -11,7 +11,9 @@ import '../widgets/app_empty_view.dart';
 import '../widgets/app_error_view.dart';
 import '../widgets/app_loading_view.dart';
 import '../widgets/category_distribution_bar.dart';
+import '../widgets/category_pie_chart.dart';
 import '../widgets/metric_card.dart';
+import '../widgets/monthly_comparison_chart.dart';
 
 /// Financial analytics and summary dashboard screen.
 ///
@@ -23,11 +25,13 @@ import '../widgets/metric_card.dart';
 class SummaryScreen extends StatefulWidget {
   final SummaryController controller;
   final VoidCallback? onAddSubscription;
+  final bool showAppBar;
 
   const SummaryScreen({
     super.key,
     required this.controller,
     this.onAddSubscription,
+    this.showAppBar = true,
   });
 
   @override
@@ -46,7 +50,9 @@ class _SummaryScreenState extends State<SummaryScreen> {
     final l10n = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n?.summaryTab ?? 'الملخص المالي')),
+      appBar: widget.showAppBar
+          ? AppBar(title: Text(l10n?.summaryTab ?? 'الملخص المالي'))
+          : null,
       body: ListenableBuilder(
         listenable: widget.controller,
         builder: (context, _) {
@@ -89,6 +95,13 @@ class _SummaryScreenState extends State<SummaryScreen> {
                     if (data.currentMonthlySummary != null) ...[
                       _buildMetricsSection(data, l10n),
                       const SizedBox(height: AppSpacing.lg),
+
+                      // Monthly Comparison Bar Chart
+                      MonthlyComparisonChart(
+                        monthlySummary: data.currentMonthlySummary!,
+                        upcomingProjection: data.upcomingProjection,
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
                     ],
 
                     // Highest Cost Subscription
@@ -97,9 +110,13 @@ class _SummaryScreenState extends State<SummaryScreen> {
                       const SizedBox(height: AppSpacing.lg),
                     ],
 
-                    // Category Distribution
+                    // Category Distribution (Interactive Pie Chart & Breakdown)
                     if (data.categoryDistribution != null &&
                         data.categoryDistribution!.items.isNotEmpty) ...[
+                      CategoryPieChart(
+                        distribution: data.categoryDistribution!,
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
                       _buildCategoryDistribution(context, data, l10n),
                     ],
                   ],
