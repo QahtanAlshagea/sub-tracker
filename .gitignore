@@ -9,6 +9,7 @@
 .history
 .svn/
 migrate_working_dir/
+tool/.trello_config.json
 
 # IntelliJ related
 *.iml
